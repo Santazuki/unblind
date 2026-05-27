@@ -53,6 +53,7 @@ Read `~/.claude/settings.json` and check three things:
 |---|---|---|
 | API Key | `.env.MIMO_API_KEY` | Non-empty string starting with `tp-` |
 | Base URL | `.env.MIMO_BASE_URL` | `https://token-plan-cn.xiaomimimo.com/anthropic` |
+| Vision Model | `.env.MIMO_VISION_MODEL` | `mimo-v2.5` or `mimo-v2-omni` |
 | Permission | `.permissions.allow` | Contains `Bash(*unblind.mjs*)` |
 
 ### 0.2 Repair missing API Key
@@ -84,13 +85,38 @@ If `.permissions.allow` array does NOT contain `Bash(*unblind.mjs*)`:
   "permissions": { "allow": ["Bash(*unblind.mjs*)"] }
   ```
 
-### 0.5 Verify Node.js
+### 0.5 Repair missing Vision Model
+
+If `MIMO_VISION_MODEL` is missing or empty:
+- Present the user with a choice (exact wording):
+  "请选择视觉模型：
+   1. **mimo-v2.5**（推荐）— 100/200 credits，性价比最高，日常识图、OCR 足够
+   2. **mimo-v2-omni** — 280/1400 credits，全模态专用，复杂场景更强
+   输入 1 或 2："
+- Wait for the user's choice.
+- Merge the chosen model into `.env`:
+  - Choice "1" → `"MIMO_VISION_MODEL": "mimo-v2.5"`
+  - Choice "2" → `"MIMO_VISION_MODEL": "mimo-v2-omni"`
+
+Also check: if `MIMO_VISION_MODEL` is set to `mimo-v2.5-pro`, warn the user
+that this model has no vision support, and re-run the selection prompt.
+
+### 0.6 Model Switching (runtime)
+
+If the user's message contains "切换模型" or "switch model" or "换个模型":
+- Show current model from settings.json
+- Present the model choice prompt (same as 0.5)
+- Update the config
+- Confirm: "已切换到 <model>。下次识图生效。"
+- Do NOT run vision analysis — this is a config-only action.
+
+### 0.7 Verify Node.js
 
 If `node --version` fails or version < 18:
 - Report: "Unblind 需要 Node.js >= 18，当前环境未检测到。请安装 Node.js 后重试。"
 - Stop. Do not proceed.
 
-### 0.6 All healthy → proceed silently
+### 0.8 All healthy → proceed silently
 
 All checks pass → continue to Phase 1 without a word about setup.
 
@@ -138,11 +164,11 @@ Pick mode from the Modes table based on the user's current message.
 
 ## Phase 3: Execute
 
-Read `MIMO_API_KEY` and `MIMO_BASE_URL` from `~/.claude/settings.json` env,
+Read `MIMO_API_KEY`, `MIMO_BASE_URL`, and `MIMO_VISION_MODEL` from `~/.claude/settings.json` env,
 substitute them into this command, and run it:
 
 ```bash
-export MIMO_API_KEY="<from-settings>" && export MIMO_BASE_URL="<from-settings>" && node ~/.claude/skills/unblind/unblind.mjs "<image-path>" <mode>
+export MIMO_API_KEY="<from-settings>" && export MIMO_BASE_URL="<from-settings>" && export MIMO_VISION_MODEL="<from-settings>" && node ~/.claude/skills/unblind/unblind.mjs "<image-path>" <mode>
 ```
 
 DO NOT ask for permission. DO NOT explain. Just execute.
