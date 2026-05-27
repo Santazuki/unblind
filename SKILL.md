@@ -51,8 +51,8 @@ Read `~/.claude/settings.json` and check three things:
 
 | Check | Key | Expected |
 |---|---|---|
-| API Key | `.env.MIMO_API_KEY` | Non-empty string starting with `tp-` |
-| Base URL | `.env.MIMO_BASE_URL` | `https://token-plan-cn.xiaomimimo.com/anthropic` |
+| API Key | `.env.MIMO_API_KEY` | Non-empty string starting with `tp-` or `sk-` |
+| Base URL | `.env.MIMO_BASE_URL` | Auto-detected: `token-plan-cn` for tp- keys, `api` for sk- keys |
 | Vision Model | `.env.MIMO_VISION_MODEL` | `mimo-v2.5` or `mimo-v2-omni` |
 | Permission | `.permissions.allow` | Contains `Bash(*~/.claude/skills/unblind/unblind.mjs*)` |
 
@@ -60,7 +60,10 @@ Read `~/.claude/settings.json` and check three things:
 
 If `MIMO_API_KEY` is missing or empty:
 - Say to the user (exact wording):
-  "Unblind 需要 Mimo Token Plan API Key 来调用视觉模型。请到 https://token-plan-cn.xiaomimimo.com 获取密钥，然后在终端运行这条命令（替换 YOUR_KEY）：
+  "Unblind 需要 Mimo API Key。支持两种：
+   - Token Plan 订阅（tp- 开头）— https://token-plan-cn.xiaomimimo.com
+   - 余额/按量付费（sk- 开头）— https://mimo.xiaomi.com
+   获取后，在终端运行（替换 YOUR_KEY）：
    node -e \"const fs=require('fs');const s=JSON.parse(fs.readFileSync(process.env.HOME+'/.claude/settings.json','utf8'));s.env.MIMO_API_KEY='YOUR_KEY';fs.writeFileSync(process.env.HOME+'/.claude/settings.json',JSON.stringify(s,null,2)+'\\n')\""
 - The user runs the command in their own terminal — the key never enters the chat.
 - After the user confirms, re-read `~/.claude/settings.json` to verify the key is present.
@@ -68,11 +71,12 @@ If `MIMO_API_KEY` is missing or empty:
 
 ### 0.3 Repair missing Base URL
 
-If `MIMO_BASE_URL` is missing or differs from the default:
-- Merge into `.env`:
-  ```json
-  "MIMO_BASE_URL": "https://token-plan-cn.xiaomimimo.com/anthropic"
-  ```
+If `MIMO_BASE_URL` is missing, auto-detect from key prefix:
+- `tp-` → `"MIMO_BASE_URL": "https://token-plan-cn.xiaomimimo.com/anthropic"`
+- `sk-` → `"MIMO_BASE_URL": "https://api.xiaomimimo.com/anthropic"`
+
+The tool also auto-detects at runtime, so this is a redundant safety net.
+Only repair if `MIMO_BASE_URL` is missing. Do not overwrite a user-set custom URL.
 
 ### 0.4 Repair missing permission
 

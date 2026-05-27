@@ -3,10 +3,20 @@ import { readFileSync, statSync } from "fs";
 import { basename, extname } from "path";
 
 const MIMO_API_KEY = process.env.MIMO_API_KEY || "";
-const MIMO_BASE_URL = process.env.MIMO_BASE_URL || "https://token-plan-cn.xiaomimimo.com/anthropic";
+const MIMO_BASE_URL = process.env.MIMO_BASE_URL || "";
 const MIMO_MODEL = process.env.MIMO_VISION_MODEL || "mimo-v2.5";
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const REQUEST_TIMEOUT = 30_000; // 30 seconds
+
+// Auto-detect key type and set defaults
+const KEY_TYPE = MIMO_API_KEY.startsWith("sk-") ? "balance" : "token";
+const DEFAULT_BASE_URL = KEY_TYPE === "balance"
+  ? "https://api.xiaomimimo.com/anthropic"
+  : "https://token-plan-cn.xiaomimimo.com/anthropic";
+const BASE_URL = MIMO_BASE_URL || DEFAULT_BASE_URL;
+const AUTH_HEADER = KEY_TYPE === "balance"
+  ? { "Authorization": `Bearer ${MIMO_API_KEY}` }
+  : { "x-api-key": MIMO_API_KEY };
 
 const SUPPORTED_EXTS = new Set([
   ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg"
@@ -30,8 +40,8 @@ Modes:
   object-detect List objects, people, activities
 
 Env vars:
-  MIMO_API_KEY       Required - your Mimo API key
-  MIMO_BASE_URL      Default: https://token-plan-cn.xiaomimimo.com/anthropic
+  MIMO_API_KEY       Required — Token Plan (tp-*) or Balance (sk-*)
+  MIMO_BASE_URL      Auto-detected from key type, override if needed
   MIMO_VISION_MODEL  Default: mimo-v2.5`);
   process.exit(1);
 }
@@ -110,16 +120,17 @@ async function main() {
       ]
     };
 
-    const url = `${MIMO_BASE_URL}/v1/messages`;
+    const url = `${BASE_URL}/v1/messages`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+    const headers = {
+      "Content-Type": "application/json",
+      "anthropic-version": "2023-06-01",
+      ...AUTH_HEADER
+    };
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": MIMO_API_KEY,
-        "anthropic-version": "2023-06-01"
-      },
+      headers,
       body: JSON.stringify(requestBody),
       signal: controller.signal
     });
