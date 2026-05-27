@@ -73,6 +73,30 @@ DeepSeek 取名自"路漫漫其修远兮，吾将上下而求索"。但它看不
 
 *DeepSeek seeks deep. Unblind lets it see.*
 
+## 为什么用内置脚本而不是 MCP
+
+MCP 的链路是：
+
+```
+用户发图 → Claude Code → MCP Client → MCP Server → HTTP → Mimo API
+```
+
+Unblind 的链路是：
+
+```
+用户发图 → Claude Code → node unblind.mjs → HTTP → Mimo API
+```
+
+**两层差距，三个理由：**
+
+**少即是多。** MCP 需要额外安装 Server（如 `uvx minimax-coding-plan-mcp`）、单独配置 `mcp.json`、维护进程生命周期。Unblind 就是一个 130 行的 `.mjs` 文件，Node.js 原生 `fetch`，零 `npm install`。每少一层，就少一个出问题的点。
+
+**体验即分发。** Unblind 的设计目标是一行 `git clone` + 发一张图 = 能用。如果用 MCP——用户得先装 MCP Server、配环境变量、重启 Claude Code、`/mcp` 验证。这些步骤里任意一步卡住，这个 skill 就不会被用起来。内置脚本把"部署"变成了"复制一个目录"。
+
+**MCP 适合共享服务，不适合独占工具。** MCP 的价值在于一个 Server 被 Claude Code、Cursor、Codex 多个客户端复用。但 Unblind 是 Claude Code 独占的——script 直接丢给 Bash 执行，不需要跨平台协议。没必要为 130 行代码修一条高速。
+
+一句话：**MCP 是高速公路，Unblind 只需要一条自行车道。**
+
 ---
 
 ## English
@@ -125,6 +149,30 @@ Send any image to Claude Code. First run guides you through API key setup — no
 | `ui-review` | UI/UX design critique |
 | `chart-data` | Chart and graph data extraction |
 | `object-detect` | Object, person, activity identification |
+
+## Why a Bundled Script, Not MCP
+
+The MCP path:
+
+```
+User → Claude Code → MCP Client → MCP Server → HTTP → Mimo API
+```
+
+Unblind's path:
+
+```
+User → Claude Code → node unblind.mjs → HTTP → Mimo API
+```
+
+**Two fewer layers, three reasons:**
+
+**Less is more.** MCP requires an extra server install (`uvx minimax-coding-plan-mcp`), separate `mcp.json` config, and process lifecycle management. Unblind is a 130-line `.mjs` file — Node.js native `fetch`, zero `npm install`. Every layer you remove is one less thing that can break.
+
+**Experience is distribution.** Unblind's goal is `git clone` + send an image = it works. With MCP, users must install a server, set env vars, restart Claude Code, and run `/mcp` to verify. Any step can silently fail. A bundled script turns "deployment" into "copy a directory."
+
+**MCP is for shared services, not exclusive tools.** MCP shines when one server serves multiple clients — Claude Code, Cursor, Codex. Unblind is Claude Code only. A script piped to Bash needs no cross-platform protocol. You don't build a highway for a bicycle.
+
+In one sentence: **MCP is a highway. Unblind just needs a bike lane.**
 
 ## Why "Unblind"
 
