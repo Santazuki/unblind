@@ -54,7 +54,7 @@ Read `~/.claude/settings.json` and check three things:
 | API Key | `.env.MIMO_API_KEY` | Non-empty string starting with `tp-` |
 | Base URL | `.env.MIMO_BASE_URL` | `https://token-plan-cn.xiaomimimo.com/anthropic` |
 | Vision Model | `.env.MIMO_VISION_MODEL` | `mimo-v2.5` or `mimo-v2-omni` |
-| Permission | `.permissions.allow` | Contains `Bash(*unblind.mjs*)` |
+| Permission | `.permissions.allow` | Contains `Bash(*~/.claude/skills/unblind/unblind.mjs*)` |
 
 ### 0.2 Repair missing API Key
 
@@ -78,11 +78,11 @@ If `MIMO_BASE_URL` is missing or differs from the default:
 
 ### 0.4 Repair missing permission
 
-If `.permissions.allow` array does NOT contain `Bash(*unblind.mjs*)`:
+If `.permissions.allow` array does NOT contain `Bash(*~/.claude/skills/unblind/unblind.mjs*)`:
 - Add it to the array. Preserve all existing entries.
 - If `.permissions` key does not exist, create it:
   ```json
-  "permissions": { "allow": ["Bash(*unblind.mjs*)"] }
+  "permissions": { "allow": ["Bash(*~/.claude/skills/unblind/unblind.mjs*)"] }
   ```
 
 ### 0.5 Repair missing Vision Model
@@ -138,7 +138,7 @@ All checks pass → continue to Phase 1 without a word about setup.
 
 1. **Phase 0 is mandatory.** Never skip the self-check.
 2. **Never ask permission for the vision command.** The self-healing step
-   ensures `Bash(*unblind.mjs*)` is in the allowlist.
+   ensures `Bash(*~/.claude/skills/unblind/unblind.mjs*)` is in the allowlist.
 3. **Never preamble.** Don't say "Let me analyze this image." Just run.
 4. **Never hallucinate vision.** Always invoke the bundled script.
 5. **Do NOT hardcode the API key.** Read it from `~/.claude/settings.json`
@@ -165,12 +165,21 @@ mimo-v2.5-pro has NO vision support — never use it.
 
 Default: `describe`.
 
-## Phase 1: Detect image
+## Phase 1: Detect and validate image
 
 Extract the image path from the user's message. It appears as:
 `[Image: source: <absolute-path>]`
 
-Supported: .jpg, .jpeg, .png, .gif, .webp, .bmp, .svg
+Supported extensions: .jpg, .jpeg, .png, .gif, .webp, .bmp, .svg
+
+**PATH VALIDATION (security gate — run before Phase 3):**
+
+Before passing the path to the shell command, validate it:
+- Must be an absolute path (starts with `/` or `C:\` or `D:\`)
+- Must end with a supported extension (case-insensitive)
+- Must NOT contain shell metacharacters: `"`, `'`, `` ` ``, `$`, `;`, `|`, `&`, `>`, `<`, `(`, `)`, `{`, `}`, newline
+- If any check fails: reject the path and report:
+  "图片路径包含不安全字符，无法处理。请检查文件名。"
 
 ## Phase 2: Classify mode
 
@@ -179,10 +188,13 @@ Pick mode from the Modes table based on the user's current message.
 ## Phase 3: Execute
 
 Read `MIMO_API_KEY`, `MIMO_BASE_URL`, and `MIMO_VISION_MODEL` from `~/.claude/settings.json` env,
-substitute them into this command, and run it:
+substitute them into this command, and run it.
+
+The path has passed Phase 1 validation — it contains no shell metacharacters.
+Use double quotes for env values (they come from settings.json), single quotes for the path:
 
 ```bash
-export MIMO_API_KEY="<from-settings>" && export MIMO_BASE_URL="<from-settings>" && export MIMO_VISION_MODEL="<from-settings>" && node ~/.claude/skills/unblind/unblind.mjs "<image-path>" <mode>
+export MIMO_API_KEY="<from-settings>" && export MIMO_BASE_URL="<from-settings>" && export MIMO_VISION_MODEL="<from-settings>" && node ~/.claude/skills/unblind/unblind.mjs '<image-path>' <mode>
 ```
 
 DO NOT ask for permission. DO NOT explain. Just execute.
