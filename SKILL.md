@@ -12,7 +12,7 @@ description: >
   "describe this chart", "review this UI", "识别图片", "看图",
   "这张图片", "分析图片", "OCR", "图片描述".
 metadata:
-  version: "2.0"
+  version: "2.1"
   category: ai-vision
   bundled_tools:
     - scripts/unblind.mjs
@@ -23,150 +23,94 @@ metadata:
 
 # Unblind
 
-> **DeepSeek can seek. Unblind lets it see.**
+Intercept images before DeepSeek sees them → route to Mimo vision API → return text.
+Never pretend to see images. Never touch settings.json with Read/Edit tools.
 
-DeepSeek is one of the most powerful reasoning models. But it has no multimodal
-capability — images sent to DeepSeek return "Unsupported Image." Unblind fixes this:
-it intercepts images before they hit DeepSeek, routes them to Mimo's vision API,
-and returns text descriptions. The user experiences it as DeepSeek gaining sight.
+## Iron Rules
 
-Self-healing setup: first run auto-detects missing config, guides the user,
-and repairs itself. Zero manual configuration.
+1. Phase 0 self-check is mandatory on every invocation
+2. NEVER use Read or Edit tool on `~/.claude/settings.json` — it would expose the API key
+3. All config checks/writes go through `node -e` Bash commands or the bundled CLI
+4. Never preamble. Never hallucinate vision. Always invoke the bundled script.
+5. The tool reads MIMO_API_KEY from env automatically (Claude Code injects it)
 
-## Agent Identity
+## Phase 0: Self-Healing Setup
 
-You are **Unblind**, a vision agent for DeepSeek. Your job:
-1. On first run (or broken config): silently self-repair.
-2. On every run: intercept images → call Mimo vision → return text.
-3. Never pretend to see images — always route to the bundled tool.
-
-## Phase 0: Self-Healing Setup (MANDATORY — run before anything else)
-
-Executes on EVERY invocation. Reads current state and repairs what's broken.
-When everything is healthy, passes through silently.
-
-### 0.1 Check config (NEVER output the API key to the transcript)
-
-Check each condition WITHOUT reading settings.json directly — the Read tool would print the full key into the chat.
-
-Run these checks via Bash (they only output existence, never the value):
+### 0.1 Check health
 
 ```bash
-# Check API Key exists
-node -e "const s=JSON.parse(require('fs').readFileSync(require('os').homedir()+'/.claude/settings.json','utf8'));console.log(s.env?.MIMO_API_KEY?'KEY_OK':'KEY_MISSING')"
-
-# Check model
-node -e "const s=JSON.parse(require('fs').readFileSync(require('os').homedir()+'/.claude/settings.json','utf8'));console.log(s.env?.MIMO_VISION_MODEL||'MODEL_MISSING')"
-
-# Check permission
+node ~/.claude/skills/unblind/scripts/unblind.mjs --config 2>/dev/null
 node -e "const s=JSON.parse(require('fs').readFileSync(require('os').homedir()+'/.claude/settings.json','utf8'));const a=s.permissions?.allow||[];console.log(a.some(x=>x.includes('unblind'))?'PERM_OK':'PERM_MISSING')"
-
-# Check Base URL (auto-detected by tool, redundant check)
-node -e "const s=JSON.parse(require('fs').readFileSync(require('os').homedir()+'/.claude/settings.json','utf8'));console.log(s.env?.MIMO_BASE_URL||'URL_AUTO')"
 ```
 
-Expected output for a healthy setup: `KEY_OK`, valid model name, `PERM_OK`, any URL.
+### 0.2 Repair API Key
 
-**IRON RULE:** Never use the Read tool on settings.json. Never print the API key value in any output. Use these Bash checks which only report status.
+If Key missing (`--config` shows "未设置" or errors), tell user (exact wording):
 
-### 0.2 Repair missing API Key
+"Unblind 需要 Mimo API Key。获取后，在终端运行（替换 YOUR_KEY）：
 
-If `MIMO_API_KEY` is missing or empty:
-- Say to the user (exact wording):
-  "Unblind 需要 Mimo API Key。支持两种：
-   - Token Plan 订阅（tp- 开头）— https://token-plan-cn.xiaomimimo.com
-   - 余额/按量付费（sk- 开头）— https://mimo.xiaomi.com
-   获取后，在终端运行（替换 YOUR_KEY）：
-   node -e \"const fs=require('fs');const os=require('os');const p=require('path').join(os.homedir(),'.claude','settings.json');const s=JSON.parse(fs.readFileSync(p,'utf8'));s.env.MIMO_API_KEY='YOUR_KEY';fs.writeFileSync(p,JSON.stringify(s,null,2)+'\\n')\""
-- The user runs the command in their own terminal — the key never enters the chat.
-- After the user confirms, run the Phase 0.1 Bash key check to verify it's present (NEVER read settings.json directly).
-- Do NOT write the key yourself with the Edit tool. The key must stay out of the transcript.
+node -e \"const fs=require('fs');const os=require('os');const p=require('path').join(os.homedir(),'.claude','settings.json');const s=JSON.parse(fs.readFileSync(p,'utf8'));s.env.MIMO_API_KEY='YOUR_KEY';fs.writeFileSync(p,JSON.stringify(s,null,2)+'\\n')\""
 
-### 0.3 Repair missing Base URL
+User runs this in their own terminal. After they confirm, re-run 0.1. Never write the key yourself.
 
-If `MIMO_BASE_URL` is missing, auto-detect from key prefix:
-- `tp-` → `"MIMO_BASE_URL": "https://token-plan-cn.xiaomimimo.com/anthropic"`
-- `sk-` → `"MIMO_BASE_URL": "https://api.xiaomimimo.com/anthropic"`
+### 0.3 Repair Base URL
 
-The tool also auto-detects at runtime, so this is a redundant safety net.
-Only repair if `MIMO_BASE_URL` is missing. Do not overwrite a user-set custom URL.
+If missing, auto-detect from key prefix:
 
-### 0.4 Repair missing permission
+```bash
+node -e "const fs=require('fs');const os=require('os');const p=require('path').join(os.homedir(),'.claude','settings.json');const s=JSON.parse(fs.readFileSync(p,'utf8'));const k=s.env?.MIMO_API_KEY||'';const url=k.startsWith('sk-')?'https://api.xiaomimimo.com/anthropic':'https://token-plan-cn.xiaomimimo.com/anthropic';if(!s.env.MIMO_BASE_URL){s.env.MIMO_BASE_URL=url;fs.writeFileSync(p,JSON.stringify(s,null,2)+'\n')}"
+```
 
-If `.permissions.allow` array does NOT contain `Bash(*~/.claude/skills/unblind/scripts/unblind.mjs*)`:
-- Add it to the array. Preserve all existing entries.
-- If `.permissions` key does not exist, create it:
-  ```json
-  "permissions": { "allow": ["Bash(*~/.claude/skills/unblind/scripts/unblind.mjs*)"] }
-  ```
+### 0.4 Repair permission
 
-### 0.5 Repair missing Vision Model
+If PERM_MISSING:
 
-If `MIMO_VISION_MODEL` is missing or empty:
-- Present the user with a choice (exact wording):
-  "请选择视觉模型：
-   1. **mimo-v2.5**（推荐）— 100/200 credits，性价比最高，日常识图、OCR 足够
-   2. **mimo-v2-omni** — 280/1400 credits，全模态专用，复杂场景更强
-   输入 1 或 2："
-- Wait for the user's choice.
-- Merge the chosen model into `.env`:
-  - Choice "1" → `"MIMO_VISION_MODEL": "mimo-v2.5"`
-  - Choice "2" → `"MIMO_VISION_MODEL": "mimo-v2-omni"`
+```bash
+node -e "const fs=require('fs');const os=require('os');const p=require('path').join(os.homedir(),'.claude','settings.json');const s=JSON.parse(fs.readFileSync(p,'utf8'));if(!s.permissions)s.permissions={allow:[]};const a=s.permissions.allow;if(!a.some(x=>x.includes('unblind'))){a.push('Bash(*~/.claude/skills/unblind/scripts/unblind.mjs*)');fs.writeFileSync(p,JSON.stringify(s,null,2)+'\n')}"
+```
 
-Also check: if `MIMO_VISION_MODEL` is set to `mimo-v2.5-pro`, warn the user
-that this model has no vision support, and re-run the selection prompt.
+### 0.5 Repair Vision Model
 
-### 0.6 Model Switching (runtime)
+If model missing or `mimo-v2.5-pro` (no vision support), ask:
 
-If the user's message contains "切换模型" or "switch model" or "换个模型":
-- Show current model from settings.json
-- Present the model choice prompt (same as 0.5)
-- Update the config
-- Confirm: "已切换到 <model>。下次识图生效。"
-- Do NOT run vision analysis — this is a config-only action.
+"请选择视觉模型：
+1. **mimo-v2.5**（推荐）— 100/200 credits
+2. **mimo-v2-omni** — 280/1400 credits
+输入 1 或 2："
 
-### 0.6.5 Version Check (run once per session)
+Write choice via Bash. For choice 1:
 
-Check if a newer version of Unblind is available on GitHub:
+```bash
+node -e "const fs=require('fs');const os=require('os');const p=require('path').join(os.homedir(),'.claude','settings.json');const s=JSON.parse(fs.readFileSync(p,'utf8'));s.env.MIMO_VISION_MODEL='mimo-v2.5';fs.writeFileSync(p,JSON.stringify(s,null,2)+'\n')"
+```
+
+For choice 2, replace `mimo-v2.5` with `mimo-v2-omni`.
+
+### 0.6 Model switching (runtime)
+
+If user says "切换模型" / "switch model" / "换个模型": show current model (from 0.1 output), present choice prompt, write selection (same as 0.5), confirm: "已切换到 <model>。"
+
+### 0.7 Version check
 
 ```bash
 cd ~/.claude/skills/unblind && git fetch origin 2>/dev/null && git rev-list --count HEAD..origin/master 2>/dev/null || echo "0"
 ```
+If > 0: "Unblind 有新版本可用（落后 <N> 个提交）。运行 `cd ~/.claude/skills/unblind && git pull` 更新。"
 
-- If output is `0`: up to date. Continue silently.
-- If output is a number > 0: the local clone is behind by that many commits.
-  Say to the user (exact wording):
-  "Unblind 有新版本可用（落后 <N> 个提交）。运行 `npx skills update unblind` 或 `cd ~/.claude/skills/unblind && git pull` 更新。"
-- If the command fails (not a git repo, no network): continue silently.
+### 0.8 Node.js check
 
-### 0.7 Verify Node.js
+If `node --version` fails or < 18, report and stop.
 
-If `node --version` fails or version < 18:
-- Report: "Unblind 需要 Node.js >= 18，当前环境未检测到。请安装 Node.js 后重试。"
-- Stop. Do not proceed.
+### 0.9 All healthy → proceed silently to Phase 1.
 
-### 0.8 All healthy → proceed silently
-
-All checks pass → continue to Phase 1 without a word about setup.
-
-## Execution Rules (IRON RULE)
-
-1. **Phase 0 is mandatory.** Never skip the self-check.
-2. **Never ask permission for the vision command.** The self-healing step
-   ensures `Bash(*~/.claude/skills/unblind/scripts/unblind.mjs*)` is in the allowlist.
-3. **Never preamble.** Don't say "Let me analyze this image." Just run.
-4. **Never hallucinate vision.** Always invoke the bundled script.
-5. **Do NOT hardcode the API key.** Read it from `~/.claude/settings.json`
-   and pass it via `export` in the shell command.
-
-## Model
+## Models
 
 | Model | Input | Output | Vision |
 |---|---|---|---|
-| **mimo-v2.5** (default) | 100 credits | 200 credits | Yes |
-| mimo-v2-omni | 280 credits | 1400 credits | Yes |
+| **mimo-v2.5** (default) | 100 | 200 | Yes |
+| mimo-v2-omni | 280 | 1400 | Yes |
 
-mimo-v2.5-pro has NO vision support — never use it.
+mimo-v2.5-pro has NO vision support.
 
 ## Modes
 
@@ -178,71 +122,24 @@ mimo-v2.5-pro has NO vision support — never use it.
 | `chart-data` | "chart", "graph", "data", "图表" |
 | `object-detect` | "objects", "detect", "identify" |
 
-Default: `describe`.
+## Phase 1: Extract & validate image path
 
-## Phase 1: Detect and validate image
+From user message: `[Image: source: <absolute-path>]`
 
-Extract the image path from the user's message. It appears as:
-`[Image: source: <absolute-path>]`
-
-Supported extensions: .jpg, .jpeg, .png, .gif, .webp, .bmp, .svg
-
-**PATH VALIDATION (security gate — run before Phase 3):**
-
-Before passing the path to the shell command, validate it:
-- Must be an absolute path (starts with `/` or `C:\` or `D:\`)
-- Must end with a supported extension (case-insensitive)
-- Must NOT contain shell metacharacters: `"`, `'`, `` ` ``, `$`, `;`, `|`, `&`, `>`, `<`, `(`, `)`, `{`, `}`, newline
-- If any check fails: reject the path and report:
-  "图片路径包含不安全字符，无法处理。请检查文件名。"
+Validation: absolute path, supported extension (.jpg/.jpeg/.png/.gif/.webp/.bmp/.svg), no shell metacharacters (`"`, `'`, `` ` ``, `$`, `;`, `|`, `&`, `>`, `<`, `(`, `)`, `{`, `}`, newline). Fail → "图片路径包含不安全字符，无法处理。"
 
 ## Phase 2: Classify mode
 
-Pick mode from the Modes table based on the user's current message.
+Match user message to Mode table above. Default: `describe`.
 
 ## Phase 3: Execute
-
-Claude Code automatically injects all `env` entries from `~/.claude/settings.json`
-into every Bash child process. No `export` is needed — `MIMO_API_KEY`, `MIMO_BASE_URL`,
-and `MIMO_VISION_MODEL` are already in the environment.
-
-The path has passed Phase 1 validation — it contains no shell metacharacters.
-Run the tool with a clean command (no secrets in the transcript):
 
 ```bash
 node ~/.claude/skills/unblind/scripts/unblind.mjs '<image-path>' <mode>
 ```
 
-DO NOT ask for permission. DO NOT explain. Just execute.
+No preamble. No permission prompt. Just run.
 
 ## Phase 4: Report
 
-Print the tool's stdout. No extra commentary unless the tool errored.
-If the tool returns an API key error, re-enter Phase 0.2.
-
-## Bundle Layout
-
-```
-~/.claude/skills/unblind/
-├── SKILL.md                 # Agent definition + self-healing logic
-├── README.md                # User documentation
-├── scripts/
-│   ├── unblind.mjs           # CLI entry (analyze / --health / --config / --set-model)
-│   └── lib/                  # Core modules (10 files, zero npm deps)
-├── templates/               # Output format templates (on-demand)
-└── resources/               # Best practices & references (on-demand)
-```
-
-## Quick Install
-
-```bash
-git clone https://github.com/Santazuki/unblind.git /tmp/unblind
-bash /tmp/unblind/install.sh
-```
-
-The skill self-configures on first use.
-
-Or via npm skills registry:
-```bash
-npx skills add Santazuki/unblind -g
-```
+Print stdout. If API key error → re-enter Phase 0.2.
