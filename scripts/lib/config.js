@@ -21,6 +21,7 @@ const DEFAULTS = {
     level: "info",
   },
   requestTimeoutMs: 30_000,
+  cacheTTLSeconds: 3600,
 };
 
 const MAX_SIZE_WARN_THRESHOLD = 20 * 1024 * 1024; // 20MB
@@ -66,6 +67,9 @@ export function loadConfig() {
     requestTimeoutMs: env.MIMO_REQUEST_TIMEOUT
       ? Number(env.MIMO_REQUEST_TIMEOUT)
       : DEFAULTS.requestTimeoutMs,
+    cacheTTLSeconds: env.MIMO_CACHE_TTL
+      ? Number(env.MIMO_CACHE_TTL)
+      : DEFAULTS.cacheTTLSeconds,
   };
 
   // 性能警告

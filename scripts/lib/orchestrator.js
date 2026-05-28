@@ -1,19 +1,22 @@
+import { statSync } from "fs";
 import { log, setLogLevel } from "./logger.js";
 import { loadConfig } from "./config.js";
 import { getApiKey, getBaseUrl } from "./credentialManager.js";
 import { processImage } from "./imageProcessor.js";
-import { withRetry, getCircuitState } from "./retry.js";
+import { withRetry } from "./retry.js";
 import { MimoProvider } from "./providers/mimo.js";
 import { ClientError } from "./errorHandler.js";
 import { VALID_MODES } from "./providers/provider.js";
+import { getCacheKey, get, set, getStats } from "./cache.js";
 
 /**
- * 分析图片 — 完整调度流程
+ * 分析图片 — 完整调度流程（含缓存）
  * @param {string} imagePath
  * @param {string} mode - describe|ocr|ui-review|chart-data|object-detect
+ * @param {{ skipCache?: boolean }} [options]
  * @returns {Promise<string>} 分析结果文本
  */
-export async function analyze(imagePath, mode = "describe") {
+export async function analyze(imagePath, mode = "describe", options = {}) {
   // 1. 加载配置
   const config = loadConfig();
   setLogLevel(config.logging.level);
@@ -39,7 +42,22 @@ export async function analyze(imagePath, mode = "describe") {
     maxImageSize: config.maxImageSize,
   });
 
-  // 5. 主 Provider
+  // 5. 缓存检查（文件已通过 processImage 校验，statSync 安全）
+  if (!options.skipCache) {
+    const cacheKey = getCacheKey(imagePath, mode);
+    const mtime = statSync(imagePath).mtimeMs;
+    const cacheEntry = get(cacheKey);
+    if (cacheEntry && cacheEntry.mtime === mtime) {
+      log("info", "orchestrator", "cache_hit", {
+        path: imagePath.slice(-30),
+        mode,
+        stats: getStats(),
+      });
+      return cacheEntry.content;
+    }
+  }
+
+  // 6. 主 Provider
   const primaryProvider = new MimoProvider({
     apiKey,
     baseUrl: getBaseUrl(apiKey),
@@ -62,6 +80,13 @@ export async function analyze(imagePath, mode = "describe") {
       mode,
       durationMs: result.processingTimeMs,
     });
+
+    // 缓存结果（含文件 mtime）
+    if (!options.skipCache) {
+      const cacheKey = getCacheKey(imagePath, mode);
+      const mtime = statSync(imagePath).mtimeMs;
+      set(cacheKey, { content: result.content, mtime }, config.cacheTTLSeconds || 3600);
+    }
 
     return result.content;
   } catch (err) {
