@@ -99,3 +99,51 @@ export async function analyze(imagePath, mode = "describe", options = {}) {
     throw err;
   }
 }
+
+/**
+ * 健康检查 — 验证配置和 API 连通性
+ * @returns {Promise<{ healthy: boolean, checks: Array<{ name: string, pass: boolean, detail: string }> }>}
+ */
+export async function runHealthCheck() {
+  const checks = [];
+
+  // 1. 配置检查
+  try {
+    const config = loadConfig();
+    checks.push({ name: "config", pass: true, detail: `模型: ${config.model}, 图片上限: ${(config.maxImageSize / 1024 / 1024).toFixed(0)}MB` });
+  } catch (err) {
+    checks.push({ name: "config", pass: false, detail: err.message });
+    return { healthy: false, checks };
+  }
+
+  // 2. API Key 检查
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    checks.push({ name: "api_key", pass: false, detail: "未设置 MIMO_API_KEY" });
+    return { healthy: false, checks };
+  }
+  checks.push({ name: "api_key", pass: true, detail: `Key 前缀: ${apiKey.slice(0, 3)}...` });
+
+  // 3. API 连通性检查
+  try {
+    const provider = new MimoProvider({
+      apiKey,
+      baseUrl: getBaseUrl(apiKey),
+      model: loadConfig().model,
+      timeoutMs: 10_000,
+    });
+    const ok = await provider.healthCheck();
+    checks.push({
+      name: "api_connectivity",
+      pass: ok,
+      detail: ok ? "Mimo API 连通正常" : "Mimo API 连通失败",
+    });
+  } catch (err) {
+    checks.push({ name: "api_connectivity", pass: false, detail: err.message });
+  }
+
+  return {
+    healthy: checks.every((c) => c.pass),
+    checks,
+  };
+}

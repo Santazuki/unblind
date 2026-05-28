@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-import { analyze } from "./lib/orchestrator.js";
+import { analyze, runHealthCheck } from "./lib/orchestrator.js";
 import { formatError } from "./lib/errorHandler.js";
 
 function usage() {
   console.log(`Usage: node unblind.mjs <image-path> [mode]
+       node unblind.mjs --health
 
 Modes:
   describe     (default) Detailed image description
@@ -11,6 +12,10 @@ Modes:
   ui-review    UI/UX design critique
   chart-data   Extract data from charts/graphs
   object-detect List objects, people, activities
+
+Options:
+  --health     运行健康检查（验证配置 + API 连通性）
+  --no-cache   跳过缓存，强制执行 API 调用
 
 Env vars:
   MIMO_API_KEY       Required — Token Plan (tp-*) or Balance (sk-*)
@@ -21,13 +26,27 @@ Env vars:
 
 async function main() {
   const args = process.argv.slice(2);
+
+  // --health
+  if (args.includes("--health")) {
+    const result = await runHealthCheck();
+    console.log(result.healthy ? "✅ 健康检查通过" : "❌ 健康检查失败");
+    console.log("");
+    for (const check of result.checks) {
+      const icon = check.pass ? "✅" : "❌";
+      console.log(`${icon} ${check.name}: ${check.detail}`);
+    }
+    process.exit(result.healthy ? 0 : 1);
+  }
+
   if (args.length < 1) usage();
 
   const imagePath = args[0];
   const mode = args[1] || "describe";
+  const skipCache = args.includes("--no-cache");
 
   try {
-    const result = await analyze(imagePath, mode);
+    const result = await analyze(imagePath, mode, { skipCache });
     console.log(result);
   } catch (err) {
     console.error(formatError(err));
