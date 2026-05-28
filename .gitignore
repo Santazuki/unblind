@@ -1,3 +1,30 @@
-.DS_Store
-node_modules/
+# 本地运行时目录（防止误操作）
+.claude/
+.agents/
+
+# 敏感配置
+settings.json
+.env
+*.env
+*secret*
+credentials*
+
+# 日志与缓存
 *.log
+cache/
+logs/
+
+# 依赖
+node_modules/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

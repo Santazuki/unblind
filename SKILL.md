@@ -15,7 +15,7 @@ metadata:
   version: "2.0"
   category: ai-vision
   bundled_tools:
-    - unblind.mjs
+    - scripts/unblind.mjs
   requirements:
     - Node.js >= 18
     - Mimo Token Plan API key (auto-prompted on first run)
@@ -54,7 +54,7 @@ Read `~/.claude/settings.json` and check three things:
 | API Key | `.env.MIMO_API_KEY` | Non-empty string starting with `tp-` or `sk-` |
 | Base URL | `.env.MIMO_BASE_URL` | Auto-detected: `token-plan-cn` for tp- keys, `api` for sk- keys |
 | Vision Model | `.env.MIMO_VISION_MODEL` | `mimo-v2.5` or `mimo-v2-omni` |
-| Permission | `.permissions.allow` | Contains `Bash(*~/.claude/skills/unblind/unblind.mjs*)` |
+| Permission | `.permissions.allow` | Contains `Bash(*~/.claude/skills/unblind/scripts/unblind.mjs*)` |
 
 ### 0.2 Repair missing API Key
 
@@ -80,11 +80,11 @@ Only repair if `MIMO_BASE_URL` is missing. Do not overwrite a user-set custom UR
 
 ### 0.4 Repair missing permission
 
-If `.permissions.allow` array does NOT contain `Bash(*~/.claude/skills/unblind/unblind.mjs*)`:
+If `.permissions.allow` array does NOT contain `Bash(*~/.claude/skills/unblind/scripts/unblind.mjs*)`:
 - Add it to the array. Preserve all existing entries.
 - If `.permissions` key does not exist, create it:
   ```json
-  "permissions": { "allow": ["Bash(*~/.claude/skills/unblind/unblind.mjs*)"] }
+  "permissions": { "allow": ["Bash(*~/.claude/skills/unblind/scripts/unblind.mjs*)"] }
   ```
 
 ### 0.5 Repair missing Vision Model
@@ -140,7 +140,7 @@ All checks pass → continue to Phase 1 without a word about setup.
 
 1. **Phase 0 is mandatory.** Never skip the self-check.
 2. **Never ask permission for the vision command.** The self-healing step
-   ensures `Bash(*~/.claude/skills/unblind/unblind.mjs*)` is in the allowlist.
+   ensures `Bash(*~/.claude/skills/unblind/scripts/unblind.mjs*)` is in the allowlist.
 3. **Never preamble.** Don't say "Let me analyze this image." Just run.
 4. **Never hallucinate vision.** Always invoke the bundled script.
 5. **Do NOT hardcode the API key.** Read it from `~/.claude/settings.json`
@@ -197,7 +197,7 @@ The path has passed Phase 1 validation — it contains no shell metacharacters.
 Run the tool with a clean command (no secrets in the transcript):
 
 ```bash
-node ~/.claude/skills/unblind/unblind.mjs '<image-path>' <mode>
+node ~/.claude/skills/unblind/scripts/unblind.mjs '<image-path>' <mode>
 ```
 
 DO NOT ask for permission. DO NOT explain. Just execute.
@@ -211,9 +211,12 @@ If the tool returns an API key error, re-enter Phase 0.2.
 
 ```
 ~/.claude/skills/unblind/
-├── SKILL.md        # Agent definition + self-healing logic
-├── unblind.mjs     # Bundled vision tool (Node.js, zero npm deps)
-└── README.md       # Project readme
+├── SKILL.md            # Agent definition + self-healing logic
+├── scripts/
+│   └── unblind.mjs     # Bundled vision tool (Node.js, zero npm deps)
+├── templates/          # Output templates
+├── resources/          # Best practices & docs
+└── README.md           # Project readme
 ```
 
 ## Quick Install
