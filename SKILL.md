@@ -211,18 +211,23 @@ If the tool returns an API key error, re-enter Phase 0.2.
 
 ```
 ~/.claude/skills/unblind/
-├── SKILL.md            # Agent definition + self-healing logic
-├── scripts/
-│   └── unblind.mjs     # Bundled vision tool (Node.js, zero npm deps)
-├── templates/          # Output templates
-├── resources/          # Best practices & docs
-└── README.md           # Project readme
+├── SKILL.md                 # Agent definition + self-healing logic
+├── README.md                # User documentation
+└── scripts/
+    ├── unblind.mjs           # CLI entry (analyze / --health / --config / --set-model)
+    └── lib/                  # Core modules (10 files, zero npm deps)
 ```
 
 ## Quick Install
 
 ```bash
-git clone https://github.com/Santazuki/unblind.git ~/.claude/skills/unblind
+git clone https://github.com/Santazuki/unblind.git /tmp/unblind
+bash /tmp/unblind/install.sh
 ```
 
 The skill self-configures on first use.
+
+Or via npm skills registry:
+```bash
+npx skills add Santazuki/unblind -g
+```
