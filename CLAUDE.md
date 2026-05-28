@@ -117,3 +117,12 @@ docs/test-results/           # 11 份按步骤的测试结果
 - **小改动**：直接实现，不走 subagent dispatch
 - **每步验证**：`node --test` + 提交独立 commit
 - **Subagent 模型选择**：机械任务用 haiku（快/便宜），集成/判断用标准模型
+
+### 提交规范（每次 commit 后强制执行）
+
+1. `git add <files> && git commit -m "..."` — 常规提交
+2. **自问**：项目状态变了吗？设计决策新增了吗？测试数变了吗？
+3. **如果有变**：立即更新对应记忆文件，然后 `git add memory && git commit --amend --no-edit`
+4. **如果无变**：跳过
+
+这确保每个 commit 不仅记录了代码变更，也同步更新了 AI 助手的"长期记忆"。
