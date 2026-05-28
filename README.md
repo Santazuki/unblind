@@ -117,6 +117,18 @@ Unblind 的链路是：
 
 一句话：**MCP 是高速公路，Unblind 只需要一条自行车道。**
 
+## GPT 的质疑 & Claude Code 的回应
+
+我们用 GPT 对项目进行了一次"刻薄审计"，它提出了 20 条潜在问题（功能缺陷 + 安全漏洞）。然后用 Claude Code 逐条实测：
+
+- **12 条完全错误** — GPT 没读过代码，凭"典型 Node 项目"经验推断（如：以为用 `exec` 拼命令、以为缓存没写 TTL、以为只支持 JPG/PNG）
+- **5 条不适用** — 指控的是设计文档里的未来规划，非已实现功能
+- **3 条部分成立** — 已纳入后续改进
+
+完整实测报告：[docs/test-results/gpt-rebuttal-report.md](docs/test-results/gpt-rebuttal-report.md)
+
+> 用 Claude Code 开发，让 Claude Code 测试，最终由 Claude Code 来运行——这不是演示，这就是 Unblind 的真实开发流程。
+
 ## 安全验证
 
 | 验证项 | 状态 |
@@ -226,6 +238,16 @@ User → Claude Code → node unblind.mjs → HTTP → Mimo API
 **MCP is for shared services, not exclusive tools.** MCP shines when one server serves multiple clients — Claude Code, Cursor, Codex. Unblind is Claude Code only. Scripts piped to Bash need no cross-platform protocol.
 
 In one sentence: **MCP is a highway. Unblind just needs a bike lane.**
+
+## GPT's Critique & Claude Code's Response
+
+We had GPT perform a "brutal audit" of this project, raising 20 potential issues. Claude Code then tested each claim against the actual code:
+
+- **12 claims outright wrong** — GPT assumed typical Node.js pitfalls without reading the code (e.g. claiming we use `exec`, caching has no TTL, or only support JPG/PNG)
+- **5 claims inapplicable** — targeting future roadmap items, not implemented features
+- **3 claims partially valid** — added to improvement backlog
+
+Full report: [docs/test-results/gpt-rebuttal-report.md](docs/test-results/gpt-rebuttal-report.md)
 
 ## Why "Unblind"
 
