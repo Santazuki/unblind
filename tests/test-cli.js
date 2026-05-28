@@ -67,4 +67,23 @@ describe("CLI", () => {
       try { unlinkSync(p); } catch {}
     }
   });
+
+  it("should show config", () => {
+    const result = execSync(`node "${UNBLIND}" --config`, {
+      encoding: "utf8",
+      env: { ...process.env },
+    });
+    assert.ok(result.includes("当前配置"), "should show config");
+    assert.ok(result.includes("视觉模型"), "should show model");
+  });
+
+  it("should reject invalid model", () => {
+    try {
+      execSync(`node "${UNBLIND}" --set-model invalid-model`, { encoding: "utf8" });
+      assert.fail("should have thrown");
+    } catch (e) {
+      const output = (e.stderr || "") + (e.stdout || "");
+      assert.ok(output.includes("无效模型"), "should reject invalid model");
+    }
+  });
 });

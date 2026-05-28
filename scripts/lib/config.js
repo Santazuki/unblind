@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
 import { log } from "./logger.js";
@@ -90,4 +90,35 @@ export function loadConfig() {
   });
 
   return config;
+}
+
+/**
+ * 获取 settings.json 路径
+ * @returns {string}
+ */
+export function getSettingsPath() {
+  return SETTINGS_FILE;
+}
+
+/**
+ * 更新 settings.json 中的 env 字段
+ * @param {object} updates - 要更新的键值对
+ */
+export function saveConfig(updates) {
+  let settings = {};
+  try {
+    const raw = readFileSync(SETTINGS_FILE, "utf8");
+    settings = JSON.parse(raw);
+  } catch {
+    settings = {};
+  }
+
+  if (!settings.env) settings.env = {};
+
+  for (const [key, value] of Object.entries(updates)) {
+    settings.env[key] = value;
+  }
+
+  writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2) + "\n", "utf8");
+  log("info", "config", "saved", { keys: Object.keys(updates).join(", ") });
 }
