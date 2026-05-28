@@ -1,6 +1,6 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { writeFileSync, readFileSync, unlinkSync, existsSync, renameSync } from "fs";
+import { writeFileSync, readFileSync, unlinkSync, existsSync, renameSync, mkdirSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
 import { loadConfig } from "../scripts/lib/config.js";
@@ -26,6 +26,7 @@ function restoreSettings(backup) {
 
 function writeTestSettings(env = {}) {
   const dir = join(homedir(), ".claude");
+  mkdirSync(dir, { recursive: true });
   const content = JSON.stringify({ env }, null, 2);
   writeFileSync(SETTINGS_FILE, content, "utf8");
 }
