@@ -32,3 +32,4 @@ tests/sample_images/*
 *.swp
 *.swo
 *~
+docs/design/resume-descriptions.md
