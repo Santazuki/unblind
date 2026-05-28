@@ -54,8 +54,8 @@ docs/test-results/           # 11 份按步骤的测试结果
 | 0 原型 | ✅ |
 | 1 模块化 | ✅ |
 | 2 稳定性（缓存/健康检查/CLI管理） | ✅ |
-| 3 扩展（多 Provider） | 📋 |
-| 4 多 Agent（MCP） | 📋 |
+| 3 扩展（多 Provider） | 🔄 OpenAI ✅ · DeepSeekVL 📋 · Ollama 📋 |
+| 4 多 Agent（MCP） | ⏭️ 跳过（设计决策：自行车道不修高速） |
 | 5 高级功能 | 📋 |
 
 ## 按需读取策略
