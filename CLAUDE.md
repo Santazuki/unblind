@@ -5,27 +5,33 @@
 
 ## 当前状态
 
-Phase 1+2 完成。165 行单文件 → 12 模块，53/53 测试通过。
+Phase 1+2 完成，Phase 3 进行中。165 行单文件 → 14 模块，53 tests（50 pass, 0 fail, 3 API-skip）。
+
+> 注意：`docs/project-prepare-md/` 中的设计文档使用 `src/` + TypeScript，代表**原始蓝图**。实际采用 `scripts/lib/` + JavaScript + `env.*` 配置格式。差异是有意为之（零编译、Claude Code 原生 env 注入），历史设计文档未更新。
 
 ## 目录结构（实际）
 
 ```
 scripts/
-├── unblind.mjs              # CLI 入口（39行薄壳）: analyze / --health / --config / --set-model
+├── unblind.mjs              # CLI 入口: analyze / --health / --config / --set-model / --cache-stats
+├── install.js               # Node.js 安装脚本（--check 诊断模式）
 └── lib/
     ├── orchestrator.js      # 调度核心：config → image → cache → provider → result
-    ├── config.js            # 读取 ~/.claude/settings.json，校验，默认值，saveConfig()
-    ├── credentialManager.js # API Key + Base URL 自动检测（tp-/sk- 前缀）
-    ├── imageProcessor.js    # 格式校验 + 大小限制 + Base64 编码
-    ├── cache.js             # SHA256 + mtime 精确匹配缓存，TTL 过期
+    ├── httpClient.js        # 统一 HTTP 层：fetch + 超时 + 错误分类 + Retry-After
+    ├── config.js            # 读取 settings.json，校验，默认值，saveConfig()
+    ├── credentialManager.js # API Key + Base URL 自动检测（sk-ant/sk-/tp- 前缀）
+    ├── imageProcessor.js    # 格式/魔数/大小校验 + Base64 编码（async readFile）
+    ├── cache.js             # SHA256 文件持久化缓存，TTL 过期，LRU 1000
     ├── retry.js             # 指数退避 + Circuit Breaker 熔断器
     ├── errorHandler.js      # ClientError / ServerError / NetworkError + 中文提示
     ├── logger.js            # JSON Lines → stderr
     └── providers/
-        ├── provider.js      # IVisionProvider 接口 + 5 种模式 prompt
-        └── mimo.js          # Mimo Anthropic-compatible API 适配
-tests/                       # 53 tests，node --test tests/test-*.js
-docs/test-results/           # 11 份按步骤的测试结果
+        ├── provider.js      # IVisionProvider 接口 + BaseProvider 基类
+        ├── mimo.js          # Mimo Anthropic-compatible API
+        └── openai.js        # OpenAI Chat Completions API (GPT-4V/GLM-5V/Ollama)
+tests/                       # node --test tests/test-*.js (50 pass, 3 API-skip)
+docs/test-results/           # 14 份按步骤的测试结果
+resources/troubleshooting.md # Phase 0 修复命令、常见错误
 ```
 
 ## 开发约定
