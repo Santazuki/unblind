@@ -23,14 +23,17 @@ const MINI_PNG = Buffer.from([
 
 describe("CLI", () => {
   it("should run health check", () => {
-    const result = execSync(`node "${UNBLIND}" --health`, {
-      encoding: "utf8",
-      env: { ...process.env },
-    });
-    assert.ok(
-      result.includes("健康检查") || result.includes("通过") || result.includes("失败"),
-      "should show health check result"
-    );
+    try {
+      const result = execSync(`node "${UNBLIND}" --health`, {
+        encoding: "utf8",
+        env: { ...process.env },
+      });
+      assert.ok(result.includes("健康检查"), "should show health check");
+    } catch (e) {
+      // --health 可能因网络问题 exit 1，但输出仍应包含诊断信息
+      const output = (e.stdout || "") + (e.stderr || "");
+      assert.ok(output.includes("健康检查"), "should show health check even on failure");
+    }
   });
 
   it("should print usage when no arguments", () => {
