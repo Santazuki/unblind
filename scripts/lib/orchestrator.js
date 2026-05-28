@@ -5,6 +5,7 @@ import { getApiKey, getBaseUrl } from "./credentialManager.js";
 import { processImage } from "./imageProcessor.js";
 import { withRetry } from "./retry.js";
 import { MimoProvider } from "./providers/mimo.js";
+import { OpenAIProvider } from "./providers/openai.js";
 import { ClientError } from "./errorHandler.js";
 import { MODE_PROMPTS, VALID_MODES } from "./providers/provider.js";
 import { getCacheKey, get, set, getStats } from "./cache.js";
@@ -60,16 +61,15 @@ export async function analyze(imagePath, mode = "describe", options = {}) {
     }
   }
 
-  // 6. 主 Provider
-  const primaryProvider = new MimoProvider({
-    apiKey,
-    baseUrl: getBaseUrl(apiKey),
-    model: config.model,
-    timeoutMs: config.requestTimeoutMs,
-  });
+  // 6. 主 Provider（根据 Key 前缀自动选择）
+  const isOpenAI = apiKey.startsWith("sk-") && !apiKey.startsWith("sk-ant");
+  const providerName = isOpenAI ? "openai" : "mimo";
+  const primaryProvider = isOpenAI
+    ? new OpenAIProvider({ apiKey, baseUrl: getBaseUrl(apiKey), model: config.model, timeoutMs: config.requestTimeoutMs })
+    : new MimoProvider({ apiKey, baseUrl: getBaseUrl(apiKey), model: config.model, timeoutMs: config.requestTimeoutMs });
 
   try {
-    log("info", "orchestrator", "calling_provider", { provider: "mimo", mode });
+    log("info", "orchestrator", "calling_provider", { provider: providerName, mode });
     const retryOptions = {
       ...config.retry,
       circuitBreaker: config.circuitBreaker,
@@ -94,7 +94,7 @@ export async function analyze(imagePath, mode = "describe", options = {}) {
   } catch (err) {
     // 熔断时尝试降级（无备选则直接抛）
     if (err.name === "CircuitBreakerOpenError") {
-      throw new ClientError("Mimo 服务暂不可用（熔断保护中）", {
+      throw new ClientError(`${providerName} 服务暂不可用（熔断保护中）`, {
         suggestion: "当前无备选 Provider，请等待恢复后重试。系统将自动恢复。",
       });
     }
@@ -128,17 +128,16 @@ export async function runHealthCheck() {
 
   // 3. API 连通性检查
   try {
-    const provider = new MimoProvider({
-      apiKey,
-      baseUrl: getBaseUrl(apiKey),
-      model: loadConfig().model,
-      timeoutMs: 10_000,
-    });
+    const isOpenAIHC = apiKey.startsWith("sk-") && !apiKey.startsWith("sk-ant");
+    const providerNameHC = isOpenAIHC ? "OpenAI" : "Mimo";
+    const provider = isOpenAIHC
+      ? new OpenAIProvider({ apiKey, baseUrl: getBaseUrl(apiKey), model: loadConfig().model, timeoutMs: 10_000 })
+      : new MimoProvider({ apiKey, baseUrl: getBaseUrl(apiKey), model: loadConfig().model, timeoutMs: 10_000 });
     const ok = await provider.healthCheck();
     checks.push({
       name: "api_connectivity",
       pass: ok,
-      detail: ok ? "Mimo API 连通正常" : "Mimo API 连通失败",
+      detail: ok ? `${providerNameHC} API 连通正常` : `${providerNameHC} API 连通失败`,
     });
   } catch (err) {
     checks.push({ name: "api_connectivity", pass: false, detail: err.message });
