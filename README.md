@@ -127,8 +127,6 @@ Unblind 的链路是：
 
 完整实测报告：[docs/test-results/gpt-rebuttal-report.md](docs/test-results/gpt-rebuttal-report.md)
 
-> 用 Claude Code 开发，让 Claude Code 测试，最终由 Claude Code 来运行——这不是演示，这就是 Unblind 的真实开发流程。
-
 ## 安全验证
 
 | 验证项 | 状态 |
