@@ -35,13 +35,13 @@ node unblind.mjs <image-path> describe --verbose
 ### 检查配置状态
 
 ```bash
-node scripts/install.js --check
+node scripts/unblind.mjs --health
 ```
 
 ### 清除图片缓存
 
 ```bash
-node scripts/cache.js --clear
+node scripts/unblind.mjs --clear-cache
 ```
 
 ## 故障排查

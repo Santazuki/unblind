@@ -1,5 +1,7 @@
 # 视觉链式思考模板 / Visual Chain-of-Thought Template
 
+> ⚠️ Phase 5 规划功能，当前不可用。`--template` flag 尚未实现。
+
 ## 输出格式
 
 使用此模板时，视觉模型按以下分步格式输出分析结果：

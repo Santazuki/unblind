@@ -1,5 +1,7 @@
 # YAML 输出格式 / YAML Output Format
 
+> ⚠️ Phase 5 规划功能，`--format` flag 尚未实现。
+
 ## 说明
 
 将视觉分析结果输出为 YAML 格式，兼顾可读性与结构化。

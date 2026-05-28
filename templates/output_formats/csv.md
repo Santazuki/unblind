@@ -1,5 +1,7 @@
 # CSV 输出格式 / CSV Output Format
 
+> ⚠️ Phase 5 规划功能，`--format` flag 尚未实现。
+
 ## 说明
 
 适用于表格类视觉分析（chart-data 模式），将数据输出为 CSV 格式。

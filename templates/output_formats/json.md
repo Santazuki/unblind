@@ -1,5 +1,7 @@
 # JSON 输出格式 / JSON Output Format
 
+> ⚠️ Phase 5 规划功能，`--format` flag 尚未实现。可通过修改 `MODE_PROMPTS` 自定义输出格式。
+
 ## 说明
 
 将视觉分析结果输出为结构化 JSON，便于下游脚本或数据管道直接使用。

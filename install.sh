@@ -30,9 +30,8 @@ deploy() {
   cp -r "$SOURCE_DIR/templates" "$dir/" 2>/dev/null || true
   cp -r "$SOURCE_DIR/resources" "$dir/" 2>/dev/null || true
 
-  # 清理旧版本残留
+  # 清理旧版本残留（Phase 1 前根目录的旧 unblind.mjs）
   rm -f "$dir/unblind.mjs" 2>/dev/null
-  rm -f "$dir/scripts/install.js" 2>/dev/null
 }
 
 echo "📸 Unblind — 部署中..."
