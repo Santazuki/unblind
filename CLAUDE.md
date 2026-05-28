@@ -58,6 +58,24 @@ docs/test-results/           # 11 份按步骤的测试结果
 | 4 多 Agent（MCP） | 📋 |
 | 5 高级功能 | 📋 |
 
+## 按需读取策略
+
+**本文件和记忆文件足以理解项目全貌。以下内容仅在需要时读取，不要预加载：**
+
+| 何时读取 | 读什么 |
+|----------|--------|
+| 需要了解某个模块的实现细节 | `scripts/lib/<module>.js` |
+| 需要查看完整设计背景 | `docs/superpowers/specs/*.md` |
+| 需要查看分步实现计划 | `docs/superpowers/plans/*.md` |
+| 需要查看历史测试结果 | `docs/test-results/step*.md` |
+| 需要了解项目定位/重构蓝图 | `docs/project-prepare-md/*.md` |
+
+**常见任务速查：**
+- 加新功能 → `scripts/lib/orchestrator.js` 是入口，`scripts/lib/providers/provider.js` 是接口
+- 修 Bug → 从 `tests/` 写复现用例开始
+- 加新 Provider → 参考 `scripts/lib/providers/mimo.js`，实现 `IVisionProvider` 接口
+- 验证改动 → `node --test tests/test-*.js`
+
 ## 记忆文件
 
 `~/.claude/projects/D--My-Projects-unblind/memory/` — 设计决策、项目状态、文档索引，新对话自动加载。
