@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { resolve } from "path";
 import { analyze, runHealthCheck } from "./lib/orchestrator.js";
 import { formatError } from "./lib/errorHandler.js";
 import { loadConfig, saveConfig, getSettingsPath } from "./lib/config.js";
@@ -74,7 +75,7 @@ async function main() {
 
   if (args.length < 1) usage();
 
-  const imagePath = args[0];
+  const imagePath = resolve(args[0]);
   const mode = args[1] || "describe";
   const skipCache = args.includes("--no-cache");
 
