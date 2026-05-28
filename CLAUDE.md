@@ -122,7 +122,5 @@ docs/test-results/           # 11 份按步骤的测试结果
 
 1. `git add <files> && git commit -m "..."` — 常规提交
 2. **自问**：项目状态变了吗？设计决策新增了吗？测试数变了吗？
-3. **如果有变**：立即更新对应记忆文件，然后 `git add memory && git commit --amend --no-edit`
+3. **如果有变**：立即写记忆文件（`~/.claude/projects/D--My-Projects-unblind/memory/`），记忆文件由 Claude Code 自动持久化，无需 git 管理
 4. **如果无变**：跳过
-
-这确保每个 commit 不仅记录了代码变更，也同步更新了 AI 助手的"长期记忆"。
