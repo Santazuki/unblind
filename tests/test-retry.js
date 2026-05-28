@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { withRetry, getCircuitState, resetCircuit } from "../scripts/lib/retry.js";
+import { withRetry, CircuitBreaker } from "../scripts/lib/retry.js";
 import { ServerError, ClientError } from "../scripts/lib/errorHandler.js";
 
 describe("retry", () => {
@@ -61,8 +61,37 @@ describe("retry", () => {
 
   describe("circuit breaker", () => {
     it("should start in CLOSED state", () => {
-      resetCircuit();
-      assert.equal(getCircuitState(), "CLOSED");
+      const cb = new CircuitBreaker();
+      assert.equal(cb.state, "CLOSED");
+    });
+
+    it("should open after threshold failures", async () => {
+      const cb = new CircuitBreaker({ failureThreshold: 3, timeoutSeconds: 60 });
+      const fn = async () => { throw new ServerError("fail"); };
+      for (let i = 0; i < 3; i++) {
+        try { await withRetry(fn, { maxAttempts: 1, baseDelayMs: 1, circuitBreaker: cb }); } catch {}
+      }
+      assert.equal(cb.state, "OPEN");
+    });
+
+    it("should isolate between instances", async () => {
+      const cb1 = new CircuitBreaker({ failureThreshold: 2, timeoutSeconds: 60 });
+      const cb2 = new CircuitBreaker({ failureThreshold: 2, timeoutSeconds: 60 });
+      const fail = async () => { throw new ServerError("fail"); };
+      for (let i = 0; i < 2; i++) {
+        try { await withRetry(fail, { maxAttempts: 1, baseDelayMs: 1, circuitBreaker: cb1 }); } catch {}
+      }
+      assert.equal(cb1.state, "OPEN");   // cb1 应该被触发
+      assert.equal(cb2.state, "CLOSED");  // cb2 不受影响
+    });
+
+    it("should reset on success", async () => {
+      const cb = new CircuitBreaker({ failureThreshold: 5, timeoutSeconds: 60 });
+      let calls = 0;
+      const fn = async () => { calls++; if (calls < 3) throw new ServerError("fail"); return "ok"; };
+      await withRetry(fn, { maxAttempts: 3, baseDelayMs: 1, circuitBreaker: cb });
+      assert.equal(cb.state, "CLOSED");
+      assert.equal(cb.getStats().failures, 0);
     });
   });
 });

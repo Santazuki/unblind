@@ -13,14 +13,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - name: Verify file structure
-        run: |
-          test -f SKILL.md || exit 1
-          test -f scripts/unblind.mjs || exit 1
-          test -f README.md || exit 1
-          test -f LICENSE || exit 1
-          test -f install.sh || exit 1
-          echo "All required files present"
+      - name: Run test suite
+        run: node --test tests/test-*.js
 
   security:
     runs-on: ubuntu-latest

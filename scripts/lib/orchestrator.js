@@ -3,7 +3,7 @@ import { log, setLogLevel } from "./logger.js";
 import { loadConfig } from "./config.js";
 import { getApiKey, getBaseUrl } from "./credentialManager.js";
 import { processImage } from "./imageProcessor.js";
-import { withRetry } from "./retry.js";
+import { withRetry, CircuitBreaker } from "./retry.js";
 import { MimoProvider } from "./providers/mimo.js";
 import { OpenAIProvider } from "./providers/openai.js";
 import { ClientError } from "./errorHandler.js";
@@ -21,7 +21,11 @@ function createProvider(primaryKey, fallbackKey, model, timeoutMs) {
     const baseUrl = getBaseUrl(apiKey);
     const isOpenAI = apiKey.startsWith("sk-") && !apiKey.startsWith("sk-ant");
     const Provider = isOpenAI ? OpenAIProvider : MimoProvider;
-    return { provider: new Provider({ apiKey, baseUrl, model, timeoutMs }), name: isOpenAI ? "openai" : "mimo" };
+    return {
+      provider: new Provider({ apiKey, baseUrl, model, timeoutMs }),
+      name: isOpenAI ? "openai" : "mimo",
+      cb: new CircuitBreaker({ failureThreshold: 5, timeoutSeconds: 60 }),
+    };
   };
   const primary = createOne(primaryKey);
   let fallback = null;
@@ -72,7 +76,7 @@ export async function analyze(imagePath, mode = "describe", options = {}) {
     log("info", "orchestrator", "calling_provider", { provider: primary.name, mode });
     const result = await withRetry(
       () => primary.provider.analyzeImage({ image: base64, options: { mode } }),
-      { ...config.retry, circuitBreaker: config.circuitBreaker }
+      { ...config.retry, circuitBreaker: primary.cb }
     );
 
     log("info", "orchestrator", "analysis_complete", { mode, durationMs: result.processingTimeMs });
