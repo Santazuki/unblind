@@ -43,4 +43,4 @@ export function getAuthHeader(apiKey) {
   return { "x-api-key": apiKey };
 }
 
-log("info", "credentialManager", "module_loaded");
+log("debug", "credentialManager", "module_loaded");

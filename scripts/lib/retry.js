@@ -112,4 +112,4 @@ export function resetCircuit() {
   openUntil = 0;
 }
 
-log("info", "retry", "module_loaded");
+log("debug", "retry", "module_loaded");

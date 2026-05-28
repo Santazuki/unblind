@@ -30,8 +30,18 @@ echo "→ 创建目标目录..."
 mkdir -p "$SKILL_DIR"
 mkdir -p "$AGENTS_DIR"
 
+# 清理旧版本残留文件
+clean_stale() {
+  local dir="$1"
+  # Phase 1 重构前的旧文件（已移入 scripts/lib/）
+  rm -f "$dir/unblind.mjs" 2>/dev/null
+  rm -rf "$dir/scripts/providers" 2>/dev/null  # 旧占位，实际在 scripts/lib/providers/
+  rm -f "$dir/scripts/imageProcessor.js" 2>/dev/null  # 旧占位
+}
+
 # 复制文件到 .claude/skills/unblind/
 echo "→ 部署到 ${SKILL_DIR} ..."
+clean_stale "$SKILL_DIR"
 cp "$SOURCE_DIR/SKILL.md" "$SKILL_DIR/"
 cp "$SOURCE_DIR/README.md" "$SKILL_DIR/"
 cp -r "$SOURCE_DIR/scripts" "$SKILL_DIR/" 2>/dev/null || true
@@ -40,6 +50,7 @@ cp -r "$SOURCE_DIR/resources" "$SKILL_DIR/" 2>/dev/null || true
 
 # 同步到 .agents/skills/unblind/（兼容其他 Agent）
 echo "→ 同步到 ${AGENTS_DIR} ..."
+clean_stale "$AGENTS_DIR"
 cp "$SOURCE_DIR/SKILL.md" "$AGENTS_DIR/"
 cp "$SOURCE_DIR/README.md" "$AGENTS_DIR/"
 cp -r "$SOURCE_DIR/scripts" "$AGENTS_DIR/" 2>/dev/null || true

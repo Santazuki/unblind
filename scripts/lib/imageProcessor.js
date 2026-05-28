@@ -94,4 +94,4 @@ export async function processImage(imagePath, options = {}) {
   return { base64, mimeType, size: fileStat.size };
 }
 
-log("info", "imageProcessor", "module_loaded");
+log("debug", "imageProcessor", "module_loaded");

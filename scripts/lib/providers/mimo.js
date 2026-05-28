@@ -155,4 +155,4 @@ export class MimoProvider {
   }
 }
 
-log("info", "mimo", "module_loaded");
+log("debug", "mimo", "module_loaded");

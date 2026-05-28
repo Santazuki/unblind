@@ -78,4 +78,4 @@ export function formatError(err) {
   return `未知错误：${err.message}`;
 }
 
-log("info", "errorHandler", "module_loaded");
+log("debug", "errorHandler", "module_loaded");
