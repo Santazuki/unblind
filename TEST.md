@@ -241,3 +241,17 @@ Run these before each release:
 - [ ] File > 50MB → rejected with clear error
 - [ ] Empty file → rejected with clear error
 - [ ] `npx skills update unblind` → updates from GitHub
+
+## 10. Phase 1 重构回归 / Phase 1 Refactor Regression (2026-05-28)
+
+| 测试项 | 结果 |
+|--------|------|
+| 单元测试总数 | 40/40 通过 |
+| 模块总数 | 10 |
+| 零外部依赖 | ✅ |
+| 无硬编码 API Key | ✅ |
+| CLI 向后兼容 | ✅ |
+| 5 种模式 API 调用 | ✅ |
+| 错误场景（缺失文件/无效格式/空文件） | ✅ |
+| 安全审计（命令注入/Key暴露/超时/文件大小） | ✅ |
+| 原始 unblind.mjs 行数 | 165 → 39 |
