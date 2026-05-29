@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-Phase 1+2 完成，Phase 3 完成，Phase 5 多图对比完成。165 行单文件 → 15 模块，93 tests（91 pass, 0 fail, 2 API-skip）。
+Phase 1+2+3 完成，Phase 5 高级功能完成。165 行单文件 → 16 模块，93 tests（91 pass, 0 fail, 2 API-skip）。Provider 注册表 7 条目（Mimo/OpenAI/Ollama/Gemini/Groq/Together/Fireworks）。
 
 > 注意：`docs/project-prepare-md/` 中的设计文档使用 `src/` + TypeScript，代表**原始蓝图**。实际采用 `scripts/lib/` + JavaScript + `env.*` 配置格式。差异是有意为之（零编译、Claude Code 原生 env 注入），历史设计文档未更新。
 
@@ -30,7 +30,8 @@ scripts/
         ├── provider.js      # IVisionProvider 接口 + BaseProvider 基类
         ├── registry.js      # Provider 注册表（一行新增模型）
         ├── mimo.js          # Mimo Anthropic-compatible API
-        └── openai.js        # OpenAI Chat Completions API (GPT-4V/GLM-5V/Ollama)
+        ├── openai.js        # OpenAI Chat Completions API (GPT-4V/GLM-5V/Ollama)
+        └── gemini.js        # Google Gemini API
 tests/                       # node --test tests/test-*.js (75 tests, 73 pass, 2 API-skip)
 docs/test-results/           # 16 份按步骤的测试结果
 resources/troubleshooting.md # Phase 0 修复命令、常见错误
@@ -64,7 +65,7 @@ resources/troubleshooting.md # Phase 0 修复命令、常见错误
 | 2 稳定性（缓存/健康检查/CLI管理） | ✅ |
 | 3 扩展（多 Provider） | ✅ Mimo→OpenAI→Ollama 链式轮换 |
 | 4 多 Agent（MCP） | ⏭️ 跳过（设计决策：自行车道不修高速） |
-| 5 高级功能 | ✅ 多图对比（Multi-Image Comparison） |
+| 5 高级功能 | ✅ 多图对比 + 结构化输出 + Provider 扩展(7条目) |
 
 ## 按需读取策略
 
