@@ -1,7 +1,7 @@
 import { ClientError, ServerError, NetworkError } from "./errorHandler.js";
 import { log } from "./logger.js";
 
-export async function apiRequest(url, { body, headers = {}, timeoutMs = 30_000, providerName }) {
+export async function apiRequest(url, { body, headers = {}, timeoutMs = 30_000, providerName, parseError }) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -14,7 +14,7 @@ export async function apiRequest(url, { body, headers = {}, timeoutMs = 30_000, 
     });
     clearTimeout(timer);
 
-    if (!res.ok) throw await httpError(res);
+    if (!res.ok) throw await httpError(res, parseError);
     return res;
 
   } catch (err) {
@@ -28,10 +28,31 @@ export async function apiRequest(url, { body, headers = {}, timeoutMs = 30_000, 
 }
 
 /** 不泄露 provider 名称、原始响应体到错误消息 */
-async function httpError(res) {
+async function httpError(res, parseError) {
   const s = res.status;
-  // 消耗响应体防止内存泄漏，不暴露内容
-  res.text().catch(() => {});
+
+  // 如果有 parseError，委托它做分类
+  if (typeof parseError === "function") {
+    const data = await res.json().catch(() => ({}));
+    const parsed = parseError(data, s);
+    switch (parsed.category) {
+      case "auth":
+        throw new ClientError("API Key 无效或被拒绝", { statusCode: s, suggestion: "请检查 API Key 是否正确" });
+      case "rate_limit":
+        throw new ServerError("API 请求频率超限", {
+          statusCode: s,
+          suggestion: "请稍后重试（系统将自动重试）",
+        });
+      case "server":
+        throw new ServerError("服务端异常，请稍后重试", { statusCode: s });
+      case "client":
+      default:
+        throw new ClientError(parsed.message || "API 请求失败", { statusCode: s, suggestion: "请检查请求参数后重试" });
+    }
+  }
+
+  // 旧路径：无 parseError，保持原有逻辑
+  res.text().catch(() => {}); // 消耗响应体防止内存泄漏
 
   if (s === 401 || s === 403) {
     throw new ClientError("API Key 无效或被拒绝", { statusCode: s, suggestion: "请检查 API Key 是否正确" });
