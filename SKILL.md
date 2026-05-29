@@ -27,8 +27,8 @@ argument-hint: [image-path] [mode]
 
 ## 概述
 
-为纯文本模型提供视觉能力。支持 7 个 Provider（Mimo/OpenAI/Gemini/Ollama/Groq/Together/Fireworks）链式轮换。
-自愈配置——首次运行自动检测并修复缺失设置。不处理视频、音频、PDF。
+为纯文本模型提供视觉能力。支持 7 个 Provider 链式轮换。自愈配置。
+采用双 pipeline 多 Agent 协作开发：Part 1 开发(Architect→Developer→Reviewer) + Part 2 Quality Gate(Security→QA→Reliability 循环至 CLEAN)。不处理视频、音频、PDF。
 
 ## 触发条件
 
