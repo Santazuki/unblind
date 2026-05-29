@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-Phase 1+2 完成，Phase 3 完成。165 行单文件 → 15 模块，75 tests（73 pass, 0 fail, 2 API-skip）。
+Phase 1+2 完成，Phase 3 完成，Phase 5 多图对比完成。165 行单文件 → 15 模块，93 tests（91 pass, 0 fail, 2 API-skip）。
 
 > 注意：`docs/project-prepare-md/` 中的设计文档使用 `src/` + TypeScript，代表**原始蓝图**。实际采用 `scripts/lib/` + JavaScript + `env.*` 配置格式。差异是有意为之（零编译、Claude Code 原生 env 注入），历史设计文档未更新。
 
@@ -64,7 +64,7 @@ resources/troubleshooting.md # Phase 0 修复命令、常见错误
 | 2 稳定性（缓存/健康检查/CLI管理） | ✅ |
 | 3 扩展（多 Provider） | ✅ Mimo→OpenAI→Ollama 链式轮换 |
 | 4 多 Agent（MCP） | ⏭️ 跳过（设计决策：自行车道不修高速） |
-| 5 高级功能 | 📋 |
+| 5 高级功能 | ✅ 多图对比（Multi-Image Comparison） |
 
 ## 按需读取策略
 
