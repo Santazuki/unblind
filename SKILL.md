@@ -28,7 +28,7 @@ argument-hint: [image-path] [mode]
 ## 概述
 
 为纯文本模型提供视觉能力。支持 7 个 Provider 链式轮换。自愈配置。
-采用双 pipeline 多 Agent 协作开发：Part 1 开发(Architect→Developer→Reviewer) + Part 2 Quality Gate(Security→QA→Reliability 循环至 CLEAN)。不处理视频、音频、PDF。
+采用双 pipeline 多 Agent 开发(PM关口控制)：Part 1(Architect→Developer+Reviewer, SL 并行审设计) + Part 2(SL→QA→RE 循环≤3轮)。不处理视频、音频、PDF。
 
 ## 触发条件
 

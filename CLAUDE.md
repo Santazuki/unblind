@@ -161,25 +161,26 @@ Round 3: 1 审计员最终确认
 
 各审计员只读扫描，报告文件:行号、严重程度、修复建议。不修复 LOW/INFO 级别。
 
-### 安全→测试→运维 协作循环
+### Quality Gate 协作循环
 
 ```
-Security Expert（方向）→ Test Engineer（测试）→ DevOps Engineer（修复）
-       ↑                                                    ↓
-       └──────────── 重新评估 ←──── 重新测试 ←──────────────┘
+Security Lead (方向) → QA Engineer (测试) → Reliability Engineer (修复)
+      ↑                                                    ↓
+      └────────── 重新评估 ←────── 重测 (≤3轮) ←──────────┘
 ```
 
-1. **Security Expert** 给出方向：攻击面分析、漏洞预判
-2. **Test Engineer** 编写安全测试并运行
-3. **DevOps Engineer** 修复失败项，循环直到全绿
-4. **Security Expert** 重新评估，仍有问题则重复整个流程
+1. **Security Lead** 攻击面分析 + 审查 Architect 设计（安全左移）
+2. **QA Engineer** 全量回归 + 安全测试 + 边缘场景
+3. **Reliability Engineer** 修复失败项（配置/环境/测试），代码bug 回 Developer
+4. **3 轮上限**：仍失败 → Security Lead 判定阻塞性 → 通知 Leader 或记录技术债
+5. **回退规则**：代码bug → Part 1 Developer · 设计缺陷 → Part 1 Architect
 
 ### 多 Agent 协作指南
 
 详见 `docs/project-prepare-md/多agent协作开发unblind.md`。角色分工：
 - **你（用户）**：Team Leader，讨论需求、审核方向、最终决策
-- **PM Agent（我）**：理解需求、派发任务、逐关查验、控制流程
-- **Subagent 6 角色**：Part 1(Architect→Developer+Reviewer) + Part 2(SL→QA→RE 循环至 CLEAN)
+- **PM Agent（我）**：理解需求 → 派发任务 → 5 个关口逐项查验 → 控制流程。Architect 设计未出不等 Developer。Reviewer 有 CRITICAL 阻断 Part 2。QA 失败 3 轮通知 Leader。
+- **Subagent 6 角色**：Part 1(Architect→Developer+Reviewer, SL 并行审设计) + Part 2(SL→QA→RE 循环≤3轮)
 - **自动触发**：说"多 agent"即启动完整双 pipeline，不漏角色。
 
 ### 提交规范（每次 commit 后强制执行）
