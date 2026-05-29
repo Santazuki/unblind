@@ -296,11 +296,48 @@ json
 
 将 `.claude/agents/` 目录提交到 Git，让团队成员共享同一套 AI 团队配置。但运行期产生的记忆文件（如 `docs/known-issues.md` 的动态内容）也提交，这样大家都能看到历史决策。
 
+---
+
+## 五、行业参考模式（2025-2026 多 Agent 开发前沿）
+
+### 5.1 主流框架对比
+
+| 框架 | 角色 | 特色 | 本项目的对应实践 |
+|------|------|------|----------------|
+| **AgentMesh** (2025) | Planner→Coder→Debugger→Reviewer | 共享”黑板”记忆、沙箱执行 | `memory/` 文件持久化共享 |
+| **ChatDev** | CEO/CTO/Programmer/Tester/Reviewer | Agent 互审消除幻觉、<7min 完成项目 | 交叉审查（Developer A⇄Reviewer B） |
+| **OpenAI Harness** | 多 Persona Reviewer | “Code is free”、JIT 上下文、垃圾回收日 | SKILL.md 三级按需披露、审计清单清理 |
+| **Copilot Orchestra** | Conductor+Planner+Impl+Review | TDD 强制执行、Haiku 节能 | TDD 流程、haiku 处理机械实现 |
+| **Engineering Team Agents** | PM/UX/Architect/Review/Writer | “问题优先”、文档即记忆 | `docs/design/` 设计先行、`CLAUDE.md` 长期记忆 |
+
+### 5.2 可复用的行业最佳实践
+
+| 模式 | 描述 | 本项目状态 |
+|------|------|-----------|
+| **Sequential Pipeline** | Plan→Code→Test→Review→Commit | ✅ 核心流程 |
+| **Orchestrator Pattern** | PM 作为中心控制器路由任务 | ✅ PM 角色 |
+| **Blackboard Architecture** | 共享文件系统作为 Agent 间记忆 | ✅ `docs/` + `memory/` |
+| **Context Window Management** | 三级渐进披露、JIT 指令注入 | ✅ SKILL.md L1/L2/L3 |
+| **Cross-Examination** | Agent 互审输出消除幻觉 | ✅ 交叉审查 |
+| **TDD Enforcement** | 先写失败测试，再写通过代码 | ✅ `node --test` 驱动 |
+| **Model Tiering** | 机械任务用 cheap model，判断用 capable model | ✅ haiku vs sonnet |
+| **Quality Gates** | 自动化审查不通过不合并 | ✅ CRITICAL/WARNING/INFO 分级 |
+
+### 5.3 差异点与改进方向
+
+| 行业实践 | 本项目当前 | 改进方向 |
+|---------|-----------|---------|
+| ChatDev 的 Agent 互审 | 有交叉审查 | 可增加”Agent 对话链”——Reviewer 向 Developer 提问，Developer 回应 |
+| Harness 的 JIT 上下文 | 有三级披露 | 可在 CI 中注入 lint 错误作为 subagent prompt |
+| Copilot Orchestra 的 TDD 强制执行 | 有 TDD | 可加 pre-commit hook 强制测试通过 |
+| AgentMesh 的沙箱执行 | 无 | CLI 工具不需要沙箱 |
+| Engineering Team Agents 的”问题优先” | 有 spec | 可强制每 PR 先写 problem statement |
+
 ------
 
-## 五、总结
+## 六、总结
 
-这套多 Agent 协作模式，本质上是 **“人工智能辅助的软件工程”** 的轻量实现：
+这套多 Agent 协作模式，本质上是 **”人工智能辅助的软件工程”** 的轻量实现：
 
 - **项目经理（你 + 主对话）**：负责拆解任务、调度资源、风险管理
 - **专家 Subagent**：各自深耕一个领域，产出高质量的设计、代码、测试、审查

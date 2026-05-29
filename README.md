@@ -143,7 +143,7 @@ Unblind 的链路是：
 - **Tester**：全量回归 + 测试报告 `docs/test-results/`
 - **自动触发**：说"多 agent"即派发完整角色链，不漏角色
 
-详见 [docs/project-prepare-md/多agent协作开发unblind.md](docs/project-prepare-md/多agent协作开发unblind.md)
+详见 [多Agent协作开发指南](docs/project-prepare-md/多agent协作开发unblind.md) | [Agent使用证明](docs/design/multi-agent-usage-proof.md)（25+ Subagent 调用记录）
 
 ## GPT 的质疑 & Claude Code 的回应
 
