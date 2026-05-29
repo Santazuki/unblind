@@ -95,8 +95,23 @@ async function main() {
     process.exit(0);
   }
 
+  // 提取 --format <value>，防止 value 泄漏到位置参数
+  const formatIdx = args.indexOf("--format");
+  const format = formatIdx >= 0 ? (args[formatIdx + 1] || "").toLowerCase() : "";
+  const validFormats = ["json", "yaml", "csv"];
+  if (format && !validFormats.includes(format)) {
+    console.warn(`未知格式: ${format}，将使用默认纯文本输出。支持: ${validFormats.join(", ")}`);
+  }
+
+  // 过滤 flags 和 flag 值，剩余为位置参数
+  const flagSet = new Set(["--health", "--config", "--no-cache", "--cache-stats", "--clear-cache", "--set-model", "--format"]);
+  const positional = args.filter((a, i) => {
+    if (flagSet.has(a)) return false;
+    if (i > 0 && args[i - 1] === "--format") return false;
+    if (i > 0 && args[i - 1] === "--set-model") return false;
+    return true;
+  });
   const flags = args.filter(a => a.startsWith("--"));
-  const positional = args.filter(a => !a.startsWith("--"));
   const cfg = loadConfig();
 
   let imagePaths, mode;
@@ -115,12 +130,6 @@ async function main() {
   }
 
   const skipCache = flags.includes("--no-cache");
-  const formatIdx = args.indexOf("--format");
-  const format = formatIdx >= 0 ? (args[formatIdx + 1] || "").toLowerCase() : "";
-  const validFormats = ["json", "yaml", "csv"];
-  if (format && !validFormats.includes(format)) {
-    console.warn(`未知格式: ${format}，将使用默认纯文本输出。支持: ${validFormats.join(", ")}`);
-  }
 
   try {
     const result = await analyze(imagePaths, mode, { skipCache, format });
