@@ -71,6 +71,8 @@ export function loadConfig() {
       ? Number(env.MIMO_CACHE_TTL)
       : DEFAULTS.cacheTTLSeconds,
     defaultMode: env.MIMO_DEFAULT_MODE || "describe",
+    ollamaUrl: env.OLLAMA_BASE_URL || "",
+    ollamaModel: env.OLLAMA_MODEL || "",
   };
 
   // 性能警告

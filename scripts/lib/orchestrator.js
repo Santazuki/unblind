@@ -11,28 +11,74 @@ import { MODE_PROMPTS, VALID_MODES } from "./providers/provider.js";
 import { getCacheKey, get, set, getStats } from "./cache.js";
 
 /**
- * 创建主备 Provider 对
- * @param {string} primaryKey - 主 API Key（MIMO）
- * @param {string} fallbackKey - 备选 API Key（OpenAI，可选）
- * @returns {{ primary: {provider, name}, fallback: {provider, name} | null }}
+ * 构建 Provider 链（按声明顺序：Mimo → OpenAI → Ollama 等）
+ * 每个 Provider 有独立 CircuitBreaker，熔断自动跳过
  */
-function createProvider(primaryKey, fallbackKey, model, timeoutMs) {
-  const createOne = (apiKey) => {
-    const baseUrl = getBaseUrl(apiKey);
-    const isOpenAI = apiKey.startsWith("sk-") && !apiKey.startsWith("sk-ant");
-    const Provider = isOpenAI ? OpenAIProvider : MimoProvider;
-    return {
-      provider: new Provider({ apiKey, baseUrl, model, timeoutMs }),
-      name: isOpenAI ? "openai" : "mimo",
+function buildProviderChain(config) {
+  const chain = [];
+  const timeoutMs = config.requestTimeoutMs;
+
+  // Mimo (tp-/sk-ant Key)
+  const mimoKey = getApiKey();
+  if (mimoKey) {
+    chain.push({
+      provider: new MimoProvider({ apiKey: mimoKey, baseUrl: getBaseUrl(mimoKey), model: config.model, timeoutMs }),
+      name: "mimo",
       cb: new CircuitBreaker({ failureThreshold: 5, timeoutSeconds: 60 }),
-    };
-  };
-  const primary = createOne(primaryKey);
-  let fallback = null;
-  if (fallbackKey && fallbackKey !== primaryKey) {
-    fallback = createOne(fallbackKey);
+    });
   }
-  return { primary, fallback };
+
+  // OpenAI (sk- Key，非 sk-ant)
+  const openaiKey = process.env.OPENAI_API_KEY || "";
+  if (openaiKey) {
+    const oaiModel = process.env.OPENAI_VISION_MODEL || "gpt-4o";
+    chain.push({
+      provider: new OpenAIProvider({ apiKey: openaiKey, model: oaiModel, timeoutMs }),
+      name: "openai",
+      cb: new CircuitBreaker({ failureThreshold: 5, timeoutSeconds: 60 }),
+    });
+  }
+
+  // Ollama (本地模型，OLLAMA_BASE_URL 存在时启用)
+  const ollamaUrl = config.ollamaUrl || process.env.OLLAMA_BASE_URL;
+  if (ollamaUrl) {
+    const ollamaModel = config.ollamaModel || process.env.OLLAMA_MODEL || "llava";
+    chain.push({
+      provider: new OpenAIProvider({ apiKey: "ollama", baseUrl: ollamaUrl, model: ollamaModel, timeoutMs }),
+      name: "ollama",
+      cb: new CircuitBreaker({ failureThreshold: 3, timeoutSeconds: 30 }),
+    });
+  }
+
+  return chain;
+}
+
+/** 遍历 Provider 链，第一个成功即返回 */
+async function tryChain(chain, base64, mode, config) {
+  const errors = [];
+  for (const { provider, name, cb } of chain) {
+    if (cb.state === "OPEN") {
+      log("info", "orchestrator", "provider_skipped", { provider: name, reason: "circuit_open" });
+      continue;
+    }
+
+    try {
+      log("info", "orchestrator", "calling_provider", { provider: name, mode });
+      const result = await withRetry(
+        () => provider.analyzeImage({ image: base64, options: { mode } }),
+        { ...config.retry, circuitBreaker: cb }
+      );
+      log("info", "orchestrator", "analysis_complete", { mode, durationMs: result.processingTimeMs, provider: name });
+      return result;
+    } catch (err) {
+      errors.push({ name, error: err.message });
+      if (err.name === "ClientError" || err.name === "CircuitBreakerOpenError") continue;
+      log("warn", "orchestrator", "provider_failed", { provider: name, error: err.message });
+    }
+  }
+  throw new ClientError("所有 Provider 均不可用", {
+    suggestion: `已尝试 ${chain.length} 个 Provider。请稍后重试或检查配置。`,
+  });
 }
 
 export async function analyze(imagePath, mode = "describe", options = {}) {
@@ -45,12 +91,10 @@ export async function analyze(imagePath, mode = "describe", options = {}) {
     });
   }
 
-  const primaryKey = getApiKey();
-  const fallbackKey = process.env.OPENAI_API_KEY || "";
-
-  if (!primaryKey && !fallbackKey) {
+  const chain = buildProviderChain(config);
+  if (chain.length === 0) {
     throw new ClientError("API Key 未配置", {
-      suggestion: "请设置 MIMO_API_KEY 或 OPENAI_API_KEY 环境变量或在 ~/.claude/settings.json 的 env 段中配置",
+      suggestion: "请设置 MIMO_API_KEY 或 OPENAI_API_KEY 环境变量",
     });
   }
 
@@ -69,46 +113,13 @@ export async function analyze(imagePath, mode = "describe", options = {}) {
     }
   }
 
-  const { primary, fallback } = createProvider(primaryKey, fallbackKey, config.model, config.requestTimeoutMs);
+  const result = await tryChain(chain, base64, mode, config);
 
-  // 主 Provider
-  try {
-    log("info", "orchestrator", "calling_provider", { provider: primary.name, mode });
-    const result = await withRetry(
-      () => primary.provider.analyzeImage({ image: base64, options: { mode } }),
-      { ...config.retry, circuitBreaker: primary.cb }
-    );
-
-    log("info", "orchestrator", "analysis_complete", { mode, durationMs: result.processingTimeMs });
-
-    if (!options.skipCache) {
-      await set(getCacheKey(imageHash, prompt), { content: result.content }, config.cacheTTLSeconds || 3600);
-    }
-
-    return result.content;
-  } catch (err) {
-    // 非客户端错误（ServerError/NetworkError/CircuitBreaker）且有备选时自动切换
-    if (fallback && err.name !== "ClientError") {
-      log("info", "orchestrator", "failing_over", {
-        from: primary.name,
-        to: fallback.name,
-        reason: err.name,
-      });
-      try {
-        const result = await fallback.provider.analyzeImage({ image: base64, options: { mode } });
-        log("info", "orchestrator", "analysis_complete", { mode, durationMs: result.processingTimeMs, provider: fallback.name });
-        if (!options.skipCache) {
-          await set(getCacheKey(imageHash, prompt), { content: result.content }, config.cacheTTLSeconds || 3600);
-        }
-        return result.content;
-      } catch (fallbackErr) {
-        throw new ClientError("所有 API 服务均不可用", {
-          suggestion: "请稍后重试。若持续出现，请检查 API Key 配置或网络连接。",
-        });
-      }
-    }
-    throw err;
+  if (!options.skipCache) {
+    await set(getCacheKey(imageHash, prompt), { content: result.content }, config.cacheTTLSeconds || 3600);
   }
+
+  return result.content;
 }
 
 export async function runHealthCheck() {
@@ -122,19 +133,21 @@ export async function runHealthCheck() {
     return { healthy: false, checks };
   }
 
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    checks.push({ name: "api_key", pass: false, detail: "未设置 MIMO_API_KEY" });
-    return { healthy: false, checks };
-  }
-  checks.push({ name: "api_key", pass: true, detail: `Key 前缀: ${apiKey.slice(0, 3)}...` });
+  const chain = buildProviderChain(config);
+  checks.push({ name: "providers", pass: chain.length > 0, detail: `${chain.length} 个可用 Provider: ${chain.map(c => c.name).join(", ")}` });
 
-  try {
-    const { primary } = createProvider(apiKey, "", config.model, 10_000);
-    const ok = await primary.provider.healthCheck();
-    checks.push({ name: "api_connectivity", pass: ok, detail: ok ? `${primary.name} API 连通正常` : `${primary.name} API 连通失败` });
-  } catch (err) {
-    checks.push({ name: "api_connectivity", pass: false, detail: err.message });
+  let anyOk = false;
+  for (const { provider, name } of chain) {
+    try {
+      const ok = await provider.healthCheck();
+      checks.push({ name: `connectivity_${name}`, pass: ok, detail: ok ? `${name} API 连通正常` : `${name} API 连通失败` });
+      if (ok) anyOk = true;
+    } catch (err) {
+      checks.push({ name: `connectivity_${name}`, pass: false, detail: err.message });
+    }
+  }
+  if (!anyOk && chain.length > 0) {
+    checks.push({ name: "all_providers", pass: false, detail: "所有 Provider 均无法连通" });
   }
 
   return { healthy: checks.every(c => c.pass), checks };

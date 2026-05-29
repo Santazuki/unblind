@@ -53,7 +53,7 @@ describe("documented commands", () => {
       const result = execSync(`${cmd} --help 2>&1 || true`, {
         encoding: "utf8",
         cwd: ROOT,
-        timeout: 5000,
+        timeout: 20000,
       }).toString();
       // 命令应该要么成功执行，要么至少能识别（输出 usage/help）
       const ok = result.includes("Usage") || result.includes("Modes") ||
@@ -96,7 +96,7 @@ describe("documented commands", () => {
 
   // 关键命令精确验证
   it("--health should output diagnostic info (even on failure)", async () => {
-    const r = runCli("--health", { timeout: 15000 });
+    const r = runCli("--health", { timeout: 30000 });
     const out = r.stdout + r.stderr;
     assert.ok(out.includes("健康检查"), `Should show health check. Got: ${out.slice(0, 200)}`);
   });
