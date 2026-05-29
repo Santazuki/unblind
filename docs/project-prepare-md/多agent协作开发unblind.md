@@ -278,7 +278,7 @@ json
 - **职责单一**：一个 Subagent 只做一件事（如架构师不写代码）
 - **明确输出格式**：让项目经理容易解析结果（例如要求输出 JSON 或特定标题）
 - **限制工具权限**：只给必要的工具（如审查员不给 `Write`）
-- **选择合适的模型**：所有 Subagent 均使用 `deepseek-v4-pro`（根据统一配置）
+- **选择合适的模型**：设计/审查用 `deepseek-v4-pro`，机械实现用 `deepseek-v4-flash`
 
 ### 4.2 项目经理（主对话）应该做的
 
@@ -307,7 +307,7 @@ json
 | **AgentMesh** (2025) | Planner→Coder→Debugger→Reviewer | 共享”黑板”记忆、沙箱执行 | `memory/` 文件持久化共享 |
 | **ChatDev** | CEO/CTO/Programmer/Tester/Reviewer | Agent 互审消除幻觉、<7min 完成项目 | 交叉审查（Developer A⇄Reviewer B） |
 | **OpenAI Harness** | 多 Persona Reviewer | “Code is free”、JIT 上下文、垃圾回收日 | SKILL.md 三级按需披露、审计清单清理 |
-| **Copilot Orchestra** | Conductor+Planner+Impl+Review | TDD 强制执行、Haiku 节能 | TDD 流程、haiku 处理机械实现 |
+| **Copilot Orchestra** | Conductor+Planner+Impl+Review | TDD 强制执行、模型分级 | TDD 流程、v4-flash 处理机械实现 |
 | **Engineering Team Agents** | PM/UX/Architect/Review/Writer | “问题优先”、文档即记忆 | `docs/design/` 设计先行、`CLAUDE.md` 长期记忆 |
 
 ### 5.2 可复用的行业最佳实践
@@ -320,7 +320,7 @@ json
 | **Context Window Management** | 三级渐进披露、JIT 指令注入 | ✅ SKILL.md L1/L2/L3 |
 | **Cross-Examination** | Agent 互审输出消除幻觉 | ✅ 交叉审查 |
 | **TDD Enforcement** | 先写失败测试，再写通过代码 | ✅ `node --test` 驱动 |
-| **Model Tiering** | 机械任务用 cheap model，判断用 capable model | ✅ haiku vs sonnet |
+| **Model Tiering** | 机械任务用 cheap model，判断用 capable model | ✅ deepseek-v4-flash vs v4-pro |
 | **Quality Gates** | 自动化审查不通过不合并 | ✅ CRITICAL/WARNING/INFO 分级 |
 
 ### 5.3 差异点与改进方向
