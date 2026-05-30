@@ -1,43 +1,34 @@
-# Unblind
+# Unblind — 一个不会悄无声息挂掉的视觉 skill
 
-> **DeepSeek can seek. Unblind lets it see.**
->
-> DeepSeek 能求索，Unblind 让它看见。
+> 给 AI Agent 安装可靠的视觉能力。自愈配置、熔断重试、安全沙箱。
+> 你的 Agent 值得一个不会悄无声息挂掉的视觉后端。
 
-> 🚀 全程使用 **Claude Code + Subagent-Driven Development** 开发，25+ AI Agent 协作完成从原型到工程化的全链路。
+[English](#english) | 中文
 
 ---
 
-[English](#english) | 中文 | 最后更新: 2026-05-29
+## 为什么选择 Unblind
 
-## 这是什么
+市面上的视觉 skill 大多是一层薄薄的 API 封装 — 请求失败就抛异常，配置丢了就卡住。Unblind 从零开始就按**工程化后端**的标准设计：Phase 0 自愈、指数退避 + 熔断、SHA256 持久化缓存、魔数文件校验、三轮安全审计。
 
-DeepSeek 是目前最强的推理模型之一，但没有多模态能力。Unblind 是一个**自愈型 Claude Code Agent Skill**，遵循 [agentskills.io](https://agentskills.io) 规范，将图片路由到 Mimo / OpenAI / Ollama 视觉模型，返回文字描述。
+| 特性 | unblind | vision-support | claude-code-vision | asuojun/claude-vision |
+|------|:---:|:---:|:---:|:---:|
+| 多 Provider 支持 | ✅ 7 | ✅ 19+ | ✅ 3 | ✅ |
+| Phase 0 自愈配置 | ✅ | ❌ | ❌ | ❌ |
+| 熔断 + 指数退避 | ✅ | ❌ | ❌ | ❌ |
+| 持久化缓存 (SHA256+LRU) | ✅ | ❌ | ❌ | ❌ |
+| 魔数文件校验 | ✅ | ❌ | ❌ | ❌ |
+| Provider 故障转移 | ✅ | ✅ | ❌ | ❌ |
+| 安全审计记录 | ✅ 三轮 CLEAN | ❌ | ❌ | ❌ |
+| 结构化输出 (json/yaml/csv) | ✅ | ❌ | ❌ | ❌ |
+| `--compare` 多图对比 | ✅ | ❌ | ❌ | ❌ |
+| `--health` CLI 诊断 | ✅ | ❌ | ❌ | ❌ |
+| 零 npm 依赖 | ✅ | ❌ | ❌ | ❌ |
+| 零 exec（安全沙箱） | ✅ | ❌ | ❌ | ❌ |
 
-```
-用户发图 → Phase 0 自检（静默）→ 魔数校验 → 缓存查询 → 7 Provider 链轮换 → 返回描述
-```
+> 注：对比基于各项目公开 README/SKILL.md，截至 2026 年 5 月。如有偏差请提 issue。
 
-## AI Agent 工程亮点
-
-这个项目展示了以下 Agent 开发能力：
-
-- **Agent Skill 设计**：三级渐进式披露（838 tokens）、自愈机制、evals 触发率评估
-- **多 Provider 架构**：Mimo → OpenAI → Ollama 链式轮换，独立 CircuitBreaker 故障隔离
-- **Subagent-Driven 开发**：Architect → Developer + Reviewer 交叉审查 → Tester，25+ Agent 协作
-- **工程完备性**：163 tests CI 实跑、三轮安全审计 CLEAN、零 npm 依赖
-
-## 核心特性
-
-- **零配置 / 自修复**：首次运行自动检测缺失配置并当场修复
-- **多 Provider 链式轮换**：7 个 Provider (Mimo/OpenAI/Gemini/Ollama/Groq/Together/Fireworks)，UNBLIND_PROVIDER_ORDER 自定义顺序
-- **Provider 注册表**：新增模型只需一行数组
-- **文件持久化缓存**：SHA256 + TTL + LRU，跨进程共享
-- **结构化输出**：`--format json|yaml|csv`，Agent 可编程调用
-- **多图对比**：`compare` 模式一次分析多张图片
-- **CircuitBreaker 实例隔离**：每个 Provider 独立熔断器，故障不传播
-
-## 安装
+## 快速开始
 
 把下面这句话发给 Claude Code：
 
@@ -50,158 +41,124 @@ git clone https://github.com/Santazuki/unblind.git /tmp/unblind
 bash /tmp/unblind/install.sh
 ```
 
-## 开发流程
+首次运行自动检测缺失配置并修复。无需手动编辑 settings.json。
 
-本项目全程使用 **Claude Code + Subagent-Driven Development**，25+ AI Agent 协作。
+## 工程特性
 
-### 方法论
+### Phase 0 自愈
 
-```
-需求 → brainstorm → spec → plan → subagent → audit → memory
-```
+每次调用前静默检查环境：Node.js 版本、settings.json 存在性、API Key 配置。缺失项目当场自动修复，不打断用户流程。健康的 skill 不应该让用户操心配置。
 
-### 多 Agent 角色
+### 熔断 + 重试
 
-**角色分工**：你（Leader）定方向 → PM Agent（我）派任务 → 6 个 Subagent 执行。
+每个 Provider 独立的 CircuitBreaker：5 次失败（Ollama 3 次）自动熔断 60 秒。指数退避重试配合 Retry-After 响应头，避免 API 雪崩。
 
-| Pipeline | 角色 | 职责 |
-|----------|------|------|
-| Part 1 | Architect | 设计，SL 并行审查设计安全 |
-| Part 1 | Developer + Reviewer | 交叉审查 |
-| Part 2 | Security Lead | 方向+设计审查+最终评估 |
-| Part 2 | QA Engineer | 全量测试+安全验证+报告 |
-| Part 2 | Reliability Engineer | 修复+CI/CD，≤3轮循环 |
+### SHA256 持久化缓存
 
-### 工程纪律
+文件级缓存（TTL + LRU 1000），SHA256 基于图片内容 + prompt 生成缓存键。同一张图跨进程、跨模式共享缓存命中。`--no-cache` 强制跳过。
 
-- **TDD**：`node --test` 驱动实现，163 tests CI 实跑
-- **三轮安全审计**：并行扫描 → 修复 HIGH+MEDIUM → 验证 → CLEAN
-- **CLAUDE.md 自动更新**：新 Phase/方向变化/重构完成时强制同步
-- **记忆文件**：`~/.claude/projects/.../memory/` 持久化，新对话自动加载
-- **安全→测试→运维 协作循环**：安全专家给方向 → 测试写用例 → 运维修复 → 重新评估，循环至 CLEAN
+### 安全边界
 
-📄 [多Agent协作指南](docs/project-prepare-md/多agent协作开发unblind.md) · [Agent使用证明](docs/design/multi-agent-usage-proof.md)
+- **零 exec / child_process**：所有操作纯 Node.js，无命令注入面
+- **魔数校验**：读取文件头字节，内容与扩展名必须一致
+- **API Key 保护**：Key 不在日志/错误消息中暴露
+- **错误脱敏**：Provider 名、响应体不进入用户可见错误
+- **三轮安全审计**：18 security tests，全部 CLEAN
 
-## 自动化验证
+## 分析模式
 
-163 tests，GitHub Actions 实跑：
+| 模式 | 用途 | CLI |
+|------|------|-----|
+| `describe` | 通用图片描述 | `node scripts/unblind.mjs image.png` |
+| `ocr` | 文字提取 | `node scripts/unblind.mjs image.png ocr` |
+| `ui-review` | UI/UX 设计评审 | `node scripts/unblind.mjs mockup.png ui-review` |
+| `chart-data` | 图表数据提取 | `node scripts/unblind.mjs chart.png chart-data` |
+| `object-detect` | 物体识别 | `node scripts/unblind.mjs photo.png object-detect` |
+| `compare` | 多图对比 | `node scripts/unblind.mjs a.png b.png compare` |
 
-```
-161 pass  0 fail  2 skip (API 连通性)
-```
+结构化输出：`--format json|yaml|csv`
 
-涵盖：功能测试、文档命令自动验证、安装脚本语法+部署检查。
+## 视觉模型
 
-## GPT 的质疑 & Claude Code 的回应
+预置 7 个 Provider，通过 `UNBLIND_PROVIDER_ORDER` 自定义轮换顺序：
 
-GPT 提出 20 条指控，Claude Code 逐条实测：12 条错误、5 条不适用、3 条部分成立。[实测报告](docs/test-results/gpt-rebuttal-report.md)
-
-## 安全验证
-
-| 验证项 | 状态 |
-|---|---|
-| API Key 不出现于对话/Bash | ✅ |
-| 命令注入防护（零 exec/child_process） | ✅ |
-| 魔数校验 + 50MB 上限 | ✅ |
-| 错误脱敏（不泄露 provider/响应体） | ✅ |
-| 三轮安全审计 CLEAN | ✅ |
-| Provider 故障转移 | ✅ |
-
-## 支持的模型（注册表 7 条目）
-
-| Provider | API 类型 | 模型示例 |
-|----------|---------|---------|
+| Provider | 协议族 | 模型 |
+|----------|--------|------|
 | Mimo | Anthropic Messages | mimo-v2.5 |
-| OpenAI | Chat Completions | GPT-4o / GPT-4.1 / GLM-5V |
-| Gemini | Gemini API | gemini-2.5-flash |
-| Ollama | 本地 OpenAI 兼容 | llava / moondream |
+| OpenAI | OpenAI Chat Completions | gpt-4o |
+| Gemini | Google Generative AI | gemini-2.5-flash |
+| Ollama | OpenAI 兼容（本地） | llama3.2-vision |
 | Groq | OpenAI 兼容 | llama-4-vision |
 | Together | OpenAI 兼容 | Llama-4-Maverick |
 | Fireworks | OpenAI 兼容 | llama-v4 |
 
-通过 `UNBLIND_PROVIDER_ORDER` 自定义轮换顺序，注册表一行新增模型。
+新增 Provider = 在注册表数组中加一行纯数据，不写逻辑代码。
 
-## 分析模式
+## CLI
 
-| 模式 | 用途 |
-|------|------|
-| `describe` | 通用描述 |
-| `ocr` | 文字提取 |
-| `ui-review` | UI/UX 设计评审 |
-| `chart-data` | 图表数据提取 |
-| `object-detect` | 物体识别 |
-| `compare` | 多图对比 |
+```
+node scripts/unblind.mjs <image> [mode]   分析图片
+node scripts/unblind.mjs <a.png> <b.png> compare  多图对比
+node scripts/unblind.mjs <image> --format json     结构化输出
+node scripts/unblind.mjs --health                 连通性诊断
+node scripts/unblind.mjs --config                 查看配置
+node scripts/unblind.mjs --set-model <model>      切换模型
+node scripts/unblind.mjs --cache-stats            缓存统计
+node scripts/unblind.mjs --clear-cache            清空缓存
+node scripts/unblind.mjs --no-cache <image>       跳过缓存
+```
 
-## MCP vs Skill — 架构决策
+## 架构
 
-Unblind 刻意不采用 MCP：两层更少的链路 = 两个更少的故障点。不是"我不会 MCP"，是"评估后判断 MCP 是过度设计"。
+```
+CLI (unblind.mjs)
+  → orchestrator (config → image → cache → provider → result)
+    → providers/ (通用 GenericProvider → protocols 协议函数调度)
+    → httpClient (fetch + 超时 + parseError 委托)
+    → cache (SHA256 + TTL + LRU)
+    → retry (指数退避 + CircuitBreaker)
+    → errorHandler (ClientError/ServerError/NetworkError + 中文提示)
+```
+
+v3.0 协议驱动架构 — 3 协议族 (Anthropic Messages / OpenAI Chat Completions / Google Generative AI)，7 个 Provider 通过纯数据注册表声明。详见 [设计文档](docs/superpowers/specs/2026-05-30-provider-v3-protocol-driven-design.md)。
+
+## 工程实践
+
+- **171 tests CI 实跑**（169 pass, 0 fail, 2 API-skip），GitHub Actions
+- **TDD**：`node --test` 内置框架，先测试后实现
+- **零 npm 依赖**：只用 Node.js >= 18 内置模块
+- **Subagent-Driven 开发**：Architect → Developer + Reviewer → SL → QA → RE 双 Pipeline
+- **CLAUDE.md 自动维护**：阶段/重构/模块变化时即时同步
+
+📄 [多 Agent 协作指南](docs/project-prepare-md/多agent协作开发unblind.md) · [实现计划](docs/superpowers/plans/2026-05-30-provider-v3-protocol-driven.md)
 
 ---
 
 ## English
 
-> 🚀 Built end-to-end with **Claude Code + Subagent-Driven Development**, 25+ AI Agents collaborating from prototype to production.
+**Unblind** — A vision skill that doesn't fail silently.
 
-## What is this
+Give your AI Agent reliable vision. Self-healing config, circuit-breaker retry, SHA256 cache, security sandbox. Your agent deserves a vision backend that won't go quietly into the night.
 
-Unblind is a **self-healing Claude Code Agent Skill** that gives DeepSeek vision capability by routing images to Mimo / OpenAI / Ollama vision APIs. Follows the [agentskills.io](https://agentskills.io) specification.
+### Why Unblind
 
-## AI Agent Engineering Highlights
+Most vision skills are thin API wrappers — fail on a bad request, freeze on missing config. Unblind is engineered like a production backend: Phase 0 self-healing, exponential backoff + circuit breaker, SHA256 persistent cache, magic byte validation, and a 3-round security audit (CLEAN).
 
-- **Agent Skill Design**: 3-level progressive disclosure (838 tokens), self-healing, evals-based trigger testing
-- **Multi-Provider Architecture**: Chain rotation with independent CircuitBreakers per provider
-- **Subagent-Driven Development**: Architect → Developer + Cross-Reviewer → Tester, 25+ agents
-- **Engineering Rigor**: 163 tests with CI enforcement, 3-round security audit (CLEAN), zero npm deps
-
-## Key Features
-
-- **Zero config, self-healing** on first run
-- **Multi-Provider chain rotation**: 7 providers, user-defined order via UNBLIND_PROVIDER_ORDER
-- **Provider registry**: Add a new model with one array line
-- **Structured output**: `--format json|yaml|csv` for programmable agent consumption
-- **Multi-image comparison**: `compare` mode analyzes multiple images in one call
-- **Isolated CircuitBreaker**: Per-provider, failure doesn't cascade
-
-## Quick Install
+### Quick Install
 
 Send this to Claude Code:
 
 > Install the unblind skill from https://github.com/Santazuki/unblind — clone it and run install.sh.
 
-Or manually: `git clone ... && bash install.sh`
+### Engineering
 
-## Dev Process
+- **Phase 0 Self-Healing**: Silent pre-flight check on every invocation, auto-repairs config gaps
+- **Circuit Breaker + Retry**: Per-provider isolation, exponential backoff, 60s cooldown
+- **SHA256 Cache**: Content-addressed, cross-process hit, TTL + LRU 1000
+- **Security Sandbox**: Zero exec, magic byte validation, API key protection, error sanitization
+- **Protocol-Driven Architecture (v3.0)**: 3 protocol families, 7 providers, pure-data registry
+- **171 tests in CI**: 169 pass, 0 fail. TDD with `node --test`, zero npm deps.
 
-Built with **Claude Code + Subagent-Driven Development**, 25+ AI agents collaborating under a structured workflow:
-
-```
-brainstorm → spec → plan → subagent(implement+review) → audit → memory
-```
-
-- **Architect ×N** (parallel) → `docs/design/`
-- **Developer + Reviewer** (cross-review, parallel)
-- **Tester** → `docs/test-results/`
-- **TDD**: `node --test`, 163 tests in CI
-- **3-round security audit**: parallel scan → fix → verify → CLEAN
-- **CLAUDE.md**: auto-updates on phase changes / refactors
-- **Memory files**: persist across conversations
-- **Security→Test→DevOps cycle**: security directs → tests written → devops fixes → re-evaluate, loop to CLEAN
-
-[Multi-Agent Guide](docs/project-prepare-md/多agent协作开发unblind.md) · [Agent Proof](docs/design/multi-agent-usage-proof.md)
-
-## Validation
-
-163 tests in GitHub Actions: 161 pass, 0 fail, 2 skip. Covers unit, integration, doc command, and install script validation.
-
-## Security
-
-3-round audit CLEAN · Zero exec/child_process · Error sanitization · Magic byte validation · Provider failover
-
-## Models & Modes
-
-7 providers: Mimo · OpenAI · Gemini · Ollama · Groq · Together · Fireworks
-describe / ocr / ui-review / chart-data / object-detect / compare
-
-## License
+### License
 
 MIT
