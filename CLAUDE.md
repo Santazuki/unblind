@@ -197,6 +197,17 @@ Security Lead (方向) → QA Engineer (测试) → Reliability Engineer (修复
 - **自动触发**：说"多 agent"即启动完整双 pipeline，不漏角色。
 - **G3 Reviewer 分工**：3 个 Reviewer 各负责不同维度（安全/代码质量/集成），缩小审查范围避免重复。`CRITICAL` 发现 → 阻断 Part 2 → 退回 Developer 修复 → Reviewer 复审查 → 确认 CLEAN 后才进 Part 2。
 
+### PM 调度规则速查
+
+详见 `docs/project-prepare-md/多agent协作开发unblind.md` 第六章"PM 调度规则：串行 vs 并行"。
+
+**派发前必答两问**：
+1. B 的产出依赖 A 的代码/设计？→ **串行**
+2. B 和 A 修改同一文件？→ **串行**
+3. 都不是 → **并行**
+
+**速记**：只读 Agent 永远并行。Developer 用文件交集 + 模块依赖判定。Part 2 全程串行。
+
 ### 提交规范（每次 commit 后强制执行）
 
 1. `git add <files> && git commit -m "..."` — 常规提交
