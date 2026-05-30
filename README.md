@@ -122,6 +122,26 @@ CLI → orchestrator (config → image → cache → provider → result)
 
 📄 [多 Agent 协作指南](docs/project-prepare-md/多agent协作开发unblind.md) · [DevFlow](https://github.com/Santazuki/devflow)
 
+## 🤝 参与贡献
+
+欢迎提 Issue 和 PR。
+
+### 开发环境
+
+```bash
+git clone https://github.com/Santazuki/unblind.git
+cd unblind
+# 零依赖，直接可用
+```
+
+### 运行测试
+
+```bash
+node --test tests/test-*.js
+```
+
+需要 API Key 的测试在无 Key 时自动跳过。
+
 ---
 
 <span id="english"></span>
