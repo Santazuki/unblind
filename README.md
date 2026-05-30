@@ -11,28 +11,26 @@
 <p align="center">
   <em>一个不会悄无声息挂掉的视觉 skill。</em>
   <br>
-  给 AI Agent 安装可靠的视觉能力。自愈配置、熔断重试、安全沙箱。
-</p>
-
-<p align="center">
-  全程使用 <b>Claude Code</b> 开发，采用自研<b>双 Pipeline 多 Agent 协作模式</b>。
+  👁️ 自愈配置 · 熔断重试 · 安全沙箱 · 零依赖
+  <br>
+  🛠️ 全程 <b>Claude Code</b> 开发 · 自研<b>双 Pipeline 多 Agent 协作模式</b>
 </p>
 
 ---
 
 [English](#english) | 中文
 
-## 这是什么
+## ✨ 这是什么
 
-Unblind 是给 AI Agent 用的视觉后端——不是面向人类的 App，而是面向 Agent 的基础设施。它把图片路由到视觉 API，返回文字描述，让没有多模态能力的模型（如 DeepSeek）能够"看图"。
+Unblind 是给 AI Agent 用的视觉后端——不是面向人类的 App，而是面向 Agent 的基础设施。把图片路由到视觉 API，返回文字描述，让没有多模态能力的模型（如 DeepSeek）能够"看图"。
 
-和大多数视觉 skill 不同的是，它不是一层薄薄的 API 封装。它按后端工程标准设计——Phase 0 自愈、熔断重试、SHA256 持久化缓存、魔数校验——每一步都有防御。
+和大多数视觉 skill 不同的是，它不是一层薄薄的 API 封装。每一步都有防御：
 
 ```
 用户发图 → Phase 0 自检（静默）→ 魔数校验 → 缓存查询 → 7 Provider 链轮换 → 返回描述
 ```
 
-## 快速开始
+## 🚀 快速开始
 
 把下面这句话发给 Claude Code：
 
@@ -45,14 +43,14 @@ git clone https://github.com/Santazuki/unblind.git /tmp/unblind
 bash /tmp/unblind/install.sh
 ```
 
-首次运行自动检测缺失配置并修复，无需手动编辑 settings.json。
+首次运行自动检测缺失配置并修复。无需手动编辑 settings.json。
 
-## 工程特性
+## ⚙️ 工程特性
 
 | 特性 | 说明 |
 |------|------|
 | 🩺 **Phase 0 自愈** | 每次调用静默检查环境，配置缺失当场修复，不打断用户 |
-| 🔌 **熔断 + 指数退避** | 每 Provider 独立 CircuitBreaker，5 次失败熔断 60s，故障不雪崩 |
+| 🔌 **熔断 + 指数退避** | 每 Provider 独立 CircuitBreaker，5 次失败熔断 60s |
 | 💾 **SHA256 持久化缓存** | 内容寻址，TTL + LRU 1000，跨进程命中，`--no-cache` 跳过 |
 | 🔀 **Provider 故障转移** | 7 个 Provider 链式轮换，`UNBLIND_PROVIDER_ORDER` 自定义顺序 |
 | 🛡️ **魔数文件校验** | 读取文件头字节，拒绝伪装成图片的攻击文件 |
@@ -60,7 +58,7 @@ bash /tmp/unblind/install.sh
 | 📐 **结构化输出** | `--format json|yaml|csv`，Agent 可编程调用 |
 | 📦 **零依赖** | 只用 Node.js >= 18 内置模块，clone 即用 |
 
-## 分析模式
+## 🔍 分析模式
 
 | 模式 | 用途 | 示例 |
 |------|------|------|
@@ -71,7 +69,7 @@ bash /tmp/unblind/install.sh
 | `object-detect` | 物体识别 | `unblind.mjs photo.png object-detect` |
 | `compare` | 多图对比 | `unblind.mjs a.png b.png compare` |
 
-## 视觉模型
+## 🎯 视觉模型
 
 预置 7 个 Provider，新增只需在注册表数组中加一行纯数据：
 
@@ -85,7 +83,7 @@ bash /tmp/unblind/install.sh
 | Together | OpenAI 兼容 | Llama-4-Maverick |
 | Fireworks | OpenAI 兼容 | llama-v4 |
 
-## CLI
+## ⌨️ CLI
 
 ```bash
 unblind.mjs <image> [mode]           # 分析图片
@@ -98,9 +96,9 @@ unblind.mjs --cache-stats            # 缓存统计
 unblind.mjs --clear-cache            # 清空缓存
 ```
 
-## 架构
+## 🏗️ 架构
 
-v3.0 协议驱动架构——3 协议族（Anthropic Messages / OpenAI Chat Completions / Google Generative AI），GenericProvider 唯一调度类，纯数据注册表。
+v3.0 协议驱动架构——3 协议族，GenericProvider 唯一调度类，纯数据注册表。
 
 ```
 CLI → orchestrator (config → image → cache → provider → result)
@@ -113,7 +111,7 @@ CLI → orchestrator (config → image → cache → provider → result)
 
 详见 [设计文档](docs/superpowers/specs/2026-05-30-provider-v3-protocol-driven-design.md)。
 
-## 工程实践
+## 🧪 工程实践
 
 - **171 tests，169 pass**，GitHub Actions 实跑
 - **TDD**：`node --test` 内置框架，先测试后实现
@@ -122,27 +120,23 @@ CLI → orchestrator (config → image → cache → provider → result)
 - **双 Pipeline 多 Agent 协作**：Part 1 (Architect → Developer + Reviewer) + Part 2 (SL → QA → RE ≤3 轮)，PM 5 关口控制
 - **CLAUDE.md 自动维护**：阶段/重构/模块变化时即时同步
 
-📄 [多 Agent 协作指南](docs/project-prepare-md/多agent协作开发unblind.md) · [DevFlow——这套协作方法的独立仓库](https://github.com/Santazuki/devflow)
+📄 [多 Agent 协作指南](docs/project-prepare-md/多agent协作开发unblind.md) · [DevFlow](https://github.com/Santazuki/devflow)
 
 ---
 
 ## English
 
-<p align="center">
-  <em>A vision skill that doesn't fail silently.</em>
-</p>
-
-Unblind is a vision backend for AI Agents. It routes images to vision APIs and returns text descriptions, giving non-multimodal models the ability to "see."
+Unblind is a vision backend for AI Agents — not a human-facing app, but infrastructure for Agents. It routes images to vision APIs and returns text descriptions, giving non-multimodal models the ability to "see."
 
 Unlike most vision skills, it's engineered with defense at every layer: Phase 0 self-healing, circuit breaker retry, SHA256 persistent cache, magic byte validation, and a 3-round security audit (CLEAN). Built entirely with **Claude Code** and a custom **dual-pipeline multi-agent workflow**.
 
-### Quick Install
+### 🚀 Quick Install
 
 Send this to Claude Code:
 
 > Install the unblind skill from https://github.com/Santazuki/unblind — clone it and run install.sh.
 
-### Features
+### ⚙️ Features
 
 - **Phase 0 Self-Healing**: Silent pre-flight check, auto-repairs config gaps
 - **Circuit Breaker + Retry**: Per-provider isolation, exponential backoff
@@ -153,9 +147,9 @@ Send this to Claude Code:
 - **Structured Output**: `--format json|yaml|csv`
 - **Zero Dependencies**: Node.js >= 18 built-in modules only
 
-### By the Numbers
+### 🧪 By the Numbers
 
-- **171 tests**, 169 pass, 0 fail — GitHub Actions enforced
+- **171 tests**, 169 pass, 0 fail — GitHub Actions
 - **7 providers**, 3 protocol families, 6 analysis modes
 - **15 modules**, zero npm dependencies
 - **3-round security audit**, 18 security tests, all CLEAN
