@@ -1,4 +1,13 @@
 <h1 align="center">Unblind</h1>
+<p align="center"><em>一个不会悄无声息挂掉的视觉 skill</em></p>
+<p align="center">
+  👁️ 自愈配置 · 熔断重试 · 安全沙箱 · 零依赖
+  <br>
+  🛠️ 全程 <b>Claude Code</b> 开发 · 自研<b>双 Pipeline 多 Agent 协作模式</b>
+</p>
+<p align="center">
+  <a href="#english">English</a> | 中文
+</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/version-3.0-blue" alt="version">
@@ -8,17 +17,8 @@
   <img src="https://img.shields.io/badge/dependencies-0-zero?labelColor=white" alt="zero deps">
   <img src="https://img.shields.io/badge/agentskills.io-compatible-purple" alt="agentskills.io">
 </p>
-<p align="center">
-  <em>一个不会悄无声息挂掉的视觉 skill。</em>
-  <br>
-  👁️ 自愈配置 · 熔断重试 · 安全沙箱 · 零依赖
-  <br>
-  🛠️ 全程 <b>Claude Code</b> 开发 · 自研<b>双 Pipeline 多 Agent 协作模式</b>
-</p>
 
 ---
-
-[English](#english) | 中文
 
 ## ✨ 这是什么
 
@@ -123,6 +123,8 @@ CLI → orchestrator (config → image → cache → provider → result)
 📄 [多 Agent 协作指南](docs/project-prepare-md/多agent协作开发unblind.md) · [DevFlow](https://github.com/Santazuki/devflow)
 
 ---
+
+<span id="english"></span>
 
 ## English
 
