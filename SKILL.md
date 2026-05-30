@@ -3,12 +3,15 @@ name: unblind
 description: >
   可靠的视觉分析 skill。自愈配置、熔断重试、SHA256 缓存。
   支持通用描述、OCR 文字提取、UI 设计评审、图表数据提取、物体检测、多图对比六种模式。
-  触发: 任何图片路径、"分析这张图"、"这是什么"、"截图"、"提取文字"、
-  "OCR"、"识别文字"、"看图"、"评审界面"、"图表数据"。
-  Triggers: any image path, "analyze this", "what's in this picture",
-  "read this screenshot", "extract text from", "describe this chart",
-  "review this UI".
-  NOT: 视频分析、音频处理、PDF 文档、纯文本对话、"生成图片"。
+  触发: 用户发送任何图片（内联图片、截图、[Image: 标记]）、任何图片文件路径、
+  "分析这张图"、"这是什么"、"截图"、"看看这个"、"这张图"、"这个图片"、
+  "提取文字"、"OCR"、"识别文字"、"看图"、"评审界面"、"图表数据"、
+  "仿照这种格式"、"参考这个"、"看看这个设计"。
+  Triggers: user sends any image, inline image, screenshot, [Image:],
+  any image file path, "analyze this", "what's in this picture",
+  "read this screenshot", "extract text from", "describe this",
+  "look at this", "check this image", "review this UI".
+  NOT: 视频分析、音频处理、PDF 文档、纯文本对话、"生成图片"、"画一张"。
 metadata:
   version: "3.0"
   category: ai-vision
@@ -36,11 +39,12 @@ argument-hint: [image-path] [mode]
 
 | 触发 | 不触发 |
 |------|--------|
-| 图片路径 (`.png/.jpg/.gif/.webp/.bmp/.svg`) | 视频文件 |
-| "分析这张图"、"这是什么"、"看图" | 音频文件 |
-| "OCR"、"提取文字"、"识别文字" | PDF 文档 |
-| "评审界面"、"UI"、"设计" | 纯文本对话 |
-| "图表"、"数据"、"趋势" | "生成图片"、"画一张" |
+| 用户直接发送图片（内联图片、截图、`[Image:]`） | 视频文件 |
+| 图片文件路径 (`.png/.jpg/.gif/.webp/.bmp/.svg`) | 音频文件 |
+| "分析这张图"、"这是什么"、"看看这个"、"看图" | PDF 文档 |
+| "OCR"、"提取文字"、"识别文字" | 纯文本对话（不含图片） |
+| "评审界面"、"UI"、"设计"、"仿照这种格式" | "生成图片"、"画一张" |
+| "图表"、"数据"、"趋势"、"参考这个" | — |
 
 ## Iron Rules
 
