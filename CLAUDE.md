@@ -32,7 +32,7 @@ scripts/
         ├── protocols.js     # 3 协议族纯函数（anthropic-messages / openai-chat-completions / google-generative-ai）
         └── generic-provider.js  # 唯一 Provider 类，调度协议函数，overrides 校验
 tests/                       # node --test tests/test-*.js (163 tests, 161 pass, 0 fail, 2 API-skip)
-docs/test-results/           # 16 份按步骤的测试结果
+docs/test-results/           # 18 份按步骤的测试结果
 resources/troubleshooting.md # Phase 0 修复命令、常见错误
 ```
 
@@ -84,7 +84,7 @@ resources/troubleshooting.md # Phase 0 修复命令、常见错误
 **常见任务速查：**
 - 加新功能 → `scripts/lib/orchestrator.js` 是入口，`scripts/lib/providers/provider.js` 是接口
 - 修 Bug → 从 `tests/` 写复现用例开始
-- 加新 Provider → 参考 `scripts/lib/providers/mimo.js`，实现 `IVisionProvider` 接口
+- 加新 Provider → 在 `scripts/lib/providers/registry.js` REGISTRY 数组中加一行（纯数据）
 - 验证改动 → `node --test tests/test-*.js`
 
 ## 记忆文件

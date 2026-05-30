@@ -7,7 +7,7 @@ description: >
   "OCR"、"识别图片"、"看图"、"评审界面"、"图表数据"、"有什么"。
   NOT: 视频分析、音频处理、PDF 文档、纯文本对话。
 metadata:
-  version: "2.2"
+  version: "3.0"
   category: ai-vision
   bundled_tools:
     - scripts/unblind.mjs

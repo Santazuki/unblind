@@ -25,7 +25,7 @@ DeepSeek 是目前最强的推理模型之一，但没有多模态能力。Unbli
 - **Agent Skill 设计**：三级渐进式披露（838 tokens）、自愈机制、evals 触发率评估
 - **多 Provider 架构**：Mimo → OpenAI → Ollama 链式轮换，独立 CircuitBreaker 故障隔离
 - **Subagent-Driven 开发**：Architect → Developer + Reviewer 交叉审查 → Tester，25+ Agent 协作
-- **工程完备性**：93 tests CI 实跑、三轮安全审计 CLEAN、零 npm 依赖
+- **工程完备性**：163 tests CI 实跑、三轮安全审计 CLEAN、零 npm 依赖
 
 ## 核心特性
 
@@ -74,7 +74,7 @@ bash /tmp/unblind/install.sh
 
 ### 工程纪律
 
-- **TDD**：`node --test` 驱动实现，93 tests CI 实跑
+- **TDD**：`node --test` 驱动实现，163 tests CI 实跑
 - **三轮安全审计**：并行扫描 → 修复 HIGH+MEDIUM → 验证 → CLEAN
 - **CLAUDE.md 自动更新**：新 Phase/方向变化/重构完成时强制同步
 - **记忆文件**：`~/.claude/projects/.../memory/` 持久化，新对话自动加载
@@ -84,10 +84,10 @@ bash /tmp/unblind/install.sh
 
 ## 自动化验证
 
-93 tests，GitHub Actions 实跑：
+163 tests，GitHub Actions 实跑：
 
 ```
-91 pass  0 fail  2 skip (API 连通性)
+161 pass  0 fail  2 skip (API 连通性)
 ```
 
 涵盖：功能测试、文档命令自动验证、安装脚本语法+部署检查。
@@ -151,7 +151,7 @@ Unblind is a **self-healing Claude Code Agent Skill** that gives DeepSeek vision
 - **Agent Skill Design**: 3-level progressive disclosure (838 tokens), self-healing, evals-based trigger testing
 - **Multi-Provider Architecture**: Chain rotation with independent CircuitBreakers per provider
 - **Subagent-Driven Development**: Architect → Developer + Cross-Reviewer → Tester, 25+ agents
-- **Engineering Rigor**: 93 tests with CI enforcement, 3-round security audit (CLEAN), zero npm deps
+- **Engineering Rigor**: 163 tests with CI enforcement, 3-round security audit (CLEAN), zero npm deps
 
 ## Key Features
 
@@ -181,7 +181,7 @@ brainstorm → spec → plan → subagent(implement+review) → audit → memory
 - **Architect ×N** (parallel) → `docs/design/`
 - **Developer + Reviewer** (cross-review, parallel)
 - **Tester** → `docs/test-results/`
-- **TDD**: `node --test`, 93 tests in CI
+- **TDD**: `node --test`, 163 tests in CI
 - **3-round security audit**: parallel scan → fix → verify → CLEAN
 - **CLAUDE.md**: auto-updates on phase changes / refactors
 - **Memory files**: persist across conversations
@@ -191,7 +191,7 @@ brainstorm → spec → plan → subagent(implement+review) → audit → memory
 
 ## Validation
 
-93 tests in GitHub Actions: 91 pass, 0 fail, 2 skip. Covers unit, integration, doc command, and install script validation.
+163 tests in GitHub Actions: 161 pass, 0 fail, 2 skip. Covers unit, integration, doc command, and install script validation.
 
 ## Security
 
