@@ -2,6 +2,8 @@
 
 > 给 AI Agent 安装可靠的视觉能力。自愈配置、熔断重试、安全沙箱。
 > 你的 Agent 值得一个不会悄无声息挂掉的视觉后端。
+>
+> 全程使用 **Claude Code** 开发，采用自研**双 Pipeline 多 Agent 协作模式**。
 
 [English](#english) | 中文
 
@@ -116,12 +118,12 @@ v3.0 协议驱动架构 — 3 协议族 (Anthropic Messages / OpenAI Chat Comple
 
 ## 工程实践
 
-本项目全程采用 **Claude Code + Subagent-Driven Development** 开发。
+采用自研**双 Pipeline 多 Agent 协作模式**开发。
 
 - **171 tests CI 实跑**（169 pass, 0 fail, 2 API-skip），GitHub Actions
 - **TDD**：`node --test` 内置框架，先测试后实现
 - **零 npm 依赖**：只用 Node.js >= 18 内置模块
-- **双 Pipeline 协作**：Architect → Developer + Reviewer → SL → QA → RE，PM 5 关口控制
+- **双 Pipeline**：Part 1 (Architect → Developer + Reviewer) + Part 2 (SL → QA → RE ≤3轮)，PM 5 关口控制
 - **CLAUDE.md 自动维护**：阶段/重构/模块变化时即时同步
 
 📄 [多 Agent 协作指南](docs/project-prepare-md/多agent协作开发unblind.md) · [实现计划](docs/superpowers/plans/2026-05-30-provider-v3-protocol-driven.md)
@@ -132,7 +134,7 @@ v3.0 协议驱动架构 — 3 协议族 (Anthropic Messages / OpenAI Chat Comple
 
 **Unblind** — A vision skill that doesn't fail silently.
 
-Give your AI Agent reliable vision. Self-healing config, circuit-breaker retry, SHA256 cache, security sandbox. Your agent deserves a vision backend that won't go quietly into the night.
+Give your AI Agent reliable vision. Self-healing config, circuit-breaker retry, SHA256 cache, security sandbox. Built entirely with **Claude Code**, using a custom **dual-pipeline multi-agent workflow**.
 
 ### Why Unblind
 
@@ -155,12 +157,12 @@ Send this to Claude Code:
 
 ### Engineering
 
-Built entirely with **Claude Code + Subagent-Driven Development**.
+Built with a custom **dual-pipeline multi-agent workflow**.
 
 - **171 tests in CI**: 169 pass, 0 fail. GitHub Actions enforced
 - **TDD**: `node --test` native framework, test-first
 - **Zero npm deps**: Node.js >= 18 built-in modules only
-- **Dual-Pipeline**: Architect → Developer + Reviewer → SL → QA → RE, 5-gate PM control
+- **Dual-Pipeline**: Part 1 (Architect → Developer + Reviewer) + Part 2 (SL → QA → RE ≤3 rounds), 5-gate PM control
 - **CLAUDE.md auto-maintained**: syncs on phase changes, refactors, module updates
 
 ### License
