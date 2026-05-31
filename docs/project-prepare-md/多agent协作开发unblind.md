@@ -152,6 +152,8 @@ model: deepseek-v4-flash
 
 职责：`node --test tests/test-*.js` → 分析失败 → 输出报告到 `docs/test-results/`
 
+测试分层参照行业标准（单元 70% / 集成 20% / E2E 10%），确保新代码覆盖率 ≥80%。
+
 ### Reliability Engineer
 
 ```yaml
@@ -207,7 +209,13 @@ PM Agent 派发任务
 │  Security Lead 最终评估 → CLEAN                │
 └────────────────────────────────────────────────┘
       ↓
-提交 + CLAUDE.md 更新 + 记忆持久化
+┌─ Part 3: 文档 + 复盘 ──────────────────────────┐
+│  Step 6: 文档撰写（测试报告 + 元数据同步）       │
+│      ↓                                         │
+│  Step 7: 复盘（时间线 + 根因 + Action Items）   │
+│      ↓                                         │
+│  提交 + CLAUDE.md 更新 + 记忆持久化             │
+└────────────────────────────────────────────────┘
 ```
 
 ## 五、PM 关口（保证流程执行）
@@ -332,7 +340,42 @@ Step 4: 输出判定
 
 6 条全部确认无误后再派发。
 
-## 七、回退规则
+## 七、每步 Definition of Done
+
+PM 推进下一步前，确认当前步骤满足 DoD。不满足不得推进：
+
+| 步骤 | Definition of Done |
+|------|------|
+| Step 1 设计 | 设计文档已输出、Leader 已确认、文件已提交 |
+| Step 2 安全左移 | SL 审查报告已出、安全问题已修复或记录 |
+| Step 3 实现 | 代码已提交、测试通过、`.gitignore` 已更新 |
+| Step 4 审查 | 3 维度审查报告已出、无 CRITICAL |
+| Step 5 质量门 | QA 全量通过、SL 最终评估 CLEAN |
+| Step 6 文档 | 测试报告已写、CLAUDE.md/README 已同步、全量扫描无遗漏 |
+| Step 7 复盘 | 复盘报告已写、Action Items 已分配、known-issues 已更新 |
+
+## 八、复盘（Post-Mortem）
+
+Part 2 CLEAN 且文档完成后启动。参照 Google SRE 和 WHOOP 实践：
+
+### 复盘结构
+
+| 节 | 内容 |
+|----|------|
+| **发生了什么** | 一句话概括 + 影响范围 |
+| **时间线** | 关键节点（PR 提交、审查发现、测试失败、修复完成） |
+| **根因** | 不是"谁犯了错"，是"什么系统条件导致了问题" |
+| **做得好的** | 哪些流程/工具/决策起了作用 |
+| **可改进的** | 具体问题 + 改进建议，按优先级排列 |
+| **Action Items** | SMART 条目：负责人 + 截止日期 |
+
+### 原则
+
+- **对事不对人** — "部署流程允许未审查的变更" 而非 "张三没审查"
+- **不追责个体** — 复盘是学习，不是审判
+- **Action Items 闭环** — 写入项目 issue 系统，下次复盘检查完成率（目标 >90%）
+
+## 九、回退规则
 
 | 失败类型 | 谁修 | 回退到 |
 |---------|------|--------|
@@ -341,7 +384,7 @@ Step 4: 输出判定
 | 代码逻辑 bug | Developer | Part 1 |
 | 设计缺陷 / 接口断裂 | Architect | Part 1 从头开始 |
 
-## 八、CRITICAL 阻断规则
+## 十、CRITICAL 阻断规则
 
 Reviewer 发现以下任一 → **阻断 Part 2**：
 
@@ -353,7 +396,7 @@ Reviewer 发现以下任一 → **阻断 Part 2**：
 
 WARNING/INFO 不阻断。
 
-## 九、Token 优化
+## 十一、Token 优化
 
 | 策略 | 说明 |
 |------|------|
@@ -362,8 +405,9 @@ WARNING/INFO 不阻断。
 | Blackboard 同步 | 文件即状态，不实时消息 |
 | SL 只读 | 不写代码，省 Write 开销 |
 
-## 十、相关文档
+## 十二、相关文档
 
 - `CLAUDE.md` — 实时状态 + 开发约定
+- [DevFlow](https://github.com/Santazuki/devflow) — 本方法论已提取为独立的通用 Skill
 - `docs/design/multi-agent-usage-proof.md` — Agent 使用记录
 - `docs/design/agent-engineering-review.md` — 简历资格评审
