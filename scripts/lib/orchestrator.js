@@ -63,9 +63,30 @@ async function tryChain(chain, images, mode, config, prompt) {
   });
 }
 
-/** 向 stderr 输出过程状态（不污染 stdout） */
-function status(emoji, text) {
-  process.stderr.write(`${emoji}  ${text}\n`);
+// 语言检测：UNBLIND_LANG > 系统 locale > 默认 zh
+const _locale = (process.env.UNBLIND_LANG || process.env.LANG || process.env.LC_ALL || "zh").toLowerCase();
+const _lang = _locale.startsWith("en") ? "en" : "zh";
+
+const _t = {
+  zh: {
+    reading: "正在读取",
+    cacheHit: "缓存命中 — 跳过 API 调用",
+    calling: "正在调用",
+    done: "分析完成",
+    images: "张图片",
+  },
+  en: {
+    reading: "Reading",
+    cacheHit: "Cache hit — skipping API call",
+    calling: "Calling",
+    done: "Done",
+    images: "images",
+  },
+};
+
+/** 向 stderr 输出过程状态（不污染 stdout），自动切换中英 */
+function status(emoji, key, suffix = "") {
+  process.stderr.write(`${emoji}  ${_t[_lang][key]}${suffix}\n`);
 }
 
 export async function analyze(imagePaths, mode = "describe", options = {}) {
@@ -88,10 +109,10 @@ export async function analyze(imagePaths, mode = "describe", options = {}) {
   // Normalize to array (backward-compatible with string path)
   const paths = Array.isArray(imagePaths) ? imagePaths : [imagePaths];
   const count = paths.length;
-  const label = count === 1 ? paths[0].replace(/^.*[\\/]/, "").slice(-40) : `${count} 张图片`;
+  const label = count === 1 ? ` ${paths[0].replace(/^.*[\\/]/, "").slice(-40)}...` : ` ${count} ${_t[_lang].images}...`;
 
   log("info", "orchestrator", "processing_images", { path: paths.map(p => p.slice(-30)).join(", "), mode, count });
-  status("📖", `正在读取 ${label}...`);
+  status("📖", "reading", label);
 
   // Batch process all images
   const images = await Promise.all(
@@ -110,17 +131,17 @@ export async function analyze(imagePaths, mode = "describe", options = {}) {
     const cacheEntry = await get(cacheKey);
     if (cacheEntry) {
       log("info", "orchestrator", "cache_hit", { path: paths.map(p => p.slice(-30)).join(", "), mode, stats: await getStats() });
-      status("💾", "缓存命中 — 跳过 API 调用");
+      status("💾", "cacheHit");
       return cacheEntry.content;
     }
   }
 
   const startTime = Date.now();
-  status("🚀", `正在调用 ${chain.map(c => c.name).join(" → ")}...`);
+  status("🚀", "calling", ` ${chain.map(c => c.name).join(" → ")}...`);
   const result = await tryChain(chain, images, mode, config, apiPrompt);
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-  status("✅", `分析完成 · ${result.model} · ${elapsed}s`);
+  status("✅", "done", ` · ${result.model} · ${elapsed}s`);
 
   if (!options.skipCache) {
     await set(getCacheKey(imageHash, cachePrompt), { content: result.content }, config.cacheTTLSeconds || 3600);
