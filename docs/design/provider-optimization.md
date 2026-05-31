@@ -2,7 +2,7 @@
 
 > 从"适配器模式"到"协议驱动架构"：将数据库领域验证了 30 年的 Dialect 模式迁移到 AI Agent 工具链。
 >
-> **已完成。** v3.0 为唯一路径，旧 Provider 文件已删除。171 tests, 169 pass, 0 fail, 2 skip。独立 npm 包：[@unblind/zeshi](https://github.com/Santazuki/zeshi)。
+> **已完成。** v3.0 为唯一路径，旧 Provider 文件已删除。171 tests, 169 pass, 0 fail, 2 skip。独立项目：[Zeshi](https://github.com/Santazuki/zeshi) — 启发自 unblind Provider 层。
 
 ---
 
@@ -16,7 +16,7 @@
 | Registry (纯数据) | `registry.js` | ✅ 完成 | 7 Provider，`loadProviders()`，旧 REGISTRY 已删除 |
 | 旧 Provider 文件 | `mimo.js`/`openai.js`/`gemini.js` | 🗑️ 已删除 | 由 `protocols.js` + `GenericProvider` 替代 |
 | BaseProvider | `provider.js` | 🗑️ 已删除 | 仅保留 `MODE_PROMPTS` |
-| 独立 npm 包 | [zeshi](https://github.com/Santazuki/zeshi) | ✅ 完成 | TypeScript，零依赖，~300 LOC |
+| 独立 npm 包 | [Zeshi](https://github.com/Santazuki/zeshi) | ✅ 完成 | 独立 npm 包，启发自 unblind，零依赖 |
 | 全量测试 | `tests/test-*.js` | ✅ 171 pass | test-protocols.js (38) + test-generic-provider.js (18) + 回归 |
 
 ---
