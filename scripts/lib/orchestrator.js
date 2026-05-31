@@ -63,6 +63,11 @@ async function tryChain(chain, images, mode, config, prompt) {
   });
 }
 
+/** 向 stderr 输出过程状态（不污染 stdout） */
+function status(emoji, text) {
+  process.stderr.write(`${emoji}  ${text}\n`);
+}
+
 export async function analyze(imagePaths, mode = "describe", options = {}) {
   const config = loadConfig();
   setLogLevel(config.logging.level);
@@ -82,8 +87,11 @@ export async function analyze(imagePaths, mode = "describe", options = {}) {
 
   // Normalize to array (backward-compatible with string path)
   const paths = Array.isArray(imagePaths) ? imagePaths : [imagePaths];
+  const count = paths.length;
+  const label = count === 1 ? paths[0].replace(/^.*[\\/]/, "").slice(-40) : `${count} 张图片`;
 
-  log("info", "orchestrator", "processing_images", { path: paths.map(p => p.slice(-30)).join(", "), mode, count: paths.length });
+  log("info", "orchestrator", "processing_images", { path: paths.map(p => p.slice(-30)).join(", "), mode, count });
+  status("📖", `正在读取 ${label}...`);
 
   // Batch process all images
   const images = await Promise.all(
@@ -102,11 +110,17 @@ export async function analyze(imagePaths, mode = "describe", options = {}) {
     const cacheEntry = await get(cacheKey);
     if (cacheEntry) {
       log("info", "orchestrator", "cache_hit", { path: paths.map(p => p.slice(-30)).join(", "), mode, stats: await getStats() });
+      status("💾", "缓存命中 — 跳过 API 调用");
       return cacheEntry.content;
     }
   }
 
+  const startTime = Date.now();
+  status("🚀", `正在调用 ${chain.map(c => c.name).join(" → ")}...`);
   const result = await tryChain(chain, images, mode, config, apiPrompt);
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  status("✅", `分析完成 · ${result.model} · ${elapsed}s`);
 
   if (!options.skipCache) {
     await set(getCacheKey(imageHash, cachePrompt), { content: result.content }, config.cacheTTLSeconds || 3600);
