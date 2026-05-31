@@ -56,6 +56,7 @@ bash /tmp/unblind/install.sh
 | 🛡️ **魔数文件校验** | 读取文件头字节，拒绝伪装成图片的攻击文件 |
 | 🔒 **安全沙箱** | 零 exec / child_process，API Key 不在任何输出中暴露 |
 | 📐 **结构化输出** | `--format json|yaml|csv`，Agent 可编程调用 |
+| 💬 **过程反馈** | 📖读取 → 🚀调用 → ✅完成，中英双语，自动检测系统语言 |
 | 📦 **零依赖** | 只用 Node.js >= 18 内置模块，clone 即用 |
 
 ## 🔍 分析模式
