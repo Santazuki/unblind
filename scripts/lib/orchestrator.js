@@ -63,8 +63,8 @@ async function tryChain(chain, images, mode, config, prompt) {
   });
 }
 
-// 语言检测：UNBLIND_LANG > 系统 locale > 默认 zh
-const _locale = (process.env.UNBLIND_LANG || process.env.LANG || process.env.LC_ALL || "zh").toLowerCase();
+// 语言检测：UNBLIND_LANG > 系统 LANG/LC_ALL > Intl API > 默认 zh
+const _locale = (process.env.UNBLIND_LANG || process.env.LANG || process.env.LC_ALL || Intl.DateTimeFormat().resolvedOptions().locale || "zh").toLowerCase();
 const _lang = _locale.startsWith("en") ? "en" : "zh";
 
 const _t = {
