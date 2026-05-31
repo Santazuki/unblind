@@ -2,7 +2,7 @@
 
 > 从"适配器模式"到"协议驱动架构"：将数据库领域验证了 30 年的 Dialect 模式迁移到 AI Agent 工具链。
 >
-> **已完成。** v3.0 为唯一路径，旧 Provider 文件已删除。171 tests, 169 pass, 0 fail, 2 skip。独立项目：[Zeshi](https://github.com/Santazuki/zeshi) — 启发自 unblind Provider 层。
+> **已完成。** v3.0 为唯一路径，旧 Provider 文件已删除。171 tests, 169 pass, 0 fail, 2 skip。独立项目：[Zeshim](https://github.com/Santazuki/zeshim) — 启发自 unblind Provider 层。
 
 ---
 
@@ -16,7 +16,7 @@
 | Registry (纯数据) | `registry.js` | ✅ 完成 | 7 Provider，`loadProviders()`，旧 REGISTRY 已删除 |
 | 旧 Provider 文件 | `mimo.js`/`openai.js`/`gemini.js` | 🗑️ 已删除 | 由 `protocols.js` + `GenericProvider` 替代 |
 | BaseProvider | `provider.js` | 🗑️ 已删除 | 仅保留 `MODE_PROMPTS` |
-| 独立 npm 包 | [Zeshi](https://github.com/Santazuki/zeshi) | ✅ 完成 | 独立 npm 包，启发自 unblind，零依赖 |
+| 独立 npm 包 | [Zeshim](https://github.com/Santazuki/zeshim) | ✅ 完成 | 独立 npm 包，启发自 unblind，零依赖 |
 | 全量测试 | `tests/test-*.js` | ✅ 171 pass | test-protocols.js (38) + test-generic-provider.js (18) + 回归 |
 
 ---
@@ -415,7 +415,7 @@ describe('openai-chat-completions', () => {
 | 协议 `endpoint/auth/buildContent` | `protocols.js` | stub 存在，三协议完整实现待迁移 |
 | GenericProvider typed helpers | `generic-provider.js` | `_call` 已拆为 5 个 private method |
 | healthCheck 真实探测 | `generic-provider.js` | 1x1 PNG + 'OK' 匹配 |
-| 独立 npm 包 | `zeshi/` | TS 严格模式，zero deps |
+| 独立 npm 包 | `zeshim/` | TS 严格模式，zero deps |
 
 ### 回滚
 
@@ -429,6 +429,6 @@ describe('openai-chat-completions', () => {
 |------|------|----------------------|
 | 数据库 ORM (Prisma) | Dialect 抽象 | PROTOCOLS = Dialect, REGISTRY = 连接串 |
 | 云基础设施 (Terraform) | Provider 抽象 | PROTOCOLS = Provider 实现, REGISTRY = provider block |
-| CC Switch | Provider 管理 | 互补——CC Switch 管"用谁"，zeshi 管"怎么用" |
+| CC Switch | Provider 管理 | 互补——CC Switch 管"用谁"，zeshim 管"怎么用" |
 | LLM 网关 (LiteLLM) | Adapter 模式 | 100+ adapter 类，不做协议分离 |
 | **unblind v3.0** | **协议驱动** | **AI Agent 工具链中首次实践 Dialect 模式** |
